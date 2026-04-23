@@ -1,0 +1,1780 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ADVANCED Helpdesk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@500;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   ADVANCED HELPDESK — A standalone ticketing portal
+   Two faces: warm/inviting for end users, dense/industrial for IT
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── ROOT TOKENS ─── */
+:root{
+  /* Brand */
+  --crimson:#C8102E; --crimson-hover:#A30D25; --crimson-bright:#E11C3F;
+  --crimson-soft:#FDEBEE;
+
+  /* End-user (light) palette */
+  --eu-bg:#F7F5F1; --eu-paper:#ffffff; --eu-paper-2:#FAF8F4;
+  --eu-ink:#1a1a1a; --eu-ink-2:#3a3a3a; --eu-ink-3:#6a6a6a; --eu-ink-4:#9a9a9a;
+  --eu-line:#E6E1D9; --eu-line-2:#D5CFC4;
+  --eu-tile-hover:#FBF6EE;
+
+  /* IT-admin (dark industrial) palette */
+  --ad-bg:#0b0d0f; --ad-surface:#141618; --ad-surface-2:#1a1d21; --ad-surface-3:#21252a;
+  --ad-border:#252930; --ad-border-2:#2e343c; --ad-border-3:#373e48;
+  --ad-text:#eaecf0; --ad-text-2:#b0b8c4; --ad-text-3:#6e7a8a; --ad-muted:#404a58;
+
+  /* Status colors */
+  --green:#0a7a3f; --green-soft:#E0F0E5;
+  --amber:#B47F00; --amber-soft:#FAF0D6;
+  --red:#B72524; --red-soft:#FBE3E3;
+  --blue:#1A5FB4; --blue-soft:#E2EBF7;
+  --purple:#6E3FA8; --purple-soft:#EDE3F8;
+
+  /* Typography */
+  --serif:'Fraunces','Georgia',serif;
+  --sans:'Barlow','Helvetica Neue',Arial,sans-serif;
+  --cond:'Barlow Condensed','Arial Narrow',sans-serif;
+  --mono:'JetBrains Mono','Menlo',monospace;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sans);font-size:15px;line-height:1.55;color:var(--eu-ink);background:var(--eu-bg);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;font-size:inherit}
+input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+a{color:var(--crimson);text-decoration:none}
+a:hover{color:var(--crimson-hover);text-decoration:underline}
+
+/* Utility */
+.hidden{display:none !important}
+.muted{color:var(--eu-ink-3)}
+.mono{font-family:var(--mono)}
+.serif{font-family:var(--serif)}
+
+/* ═══════════════════════════════════════════════════════════════
+   END-USER SIDE — warm, inviting, generous whitespace
+   ═══════════════════════════════════════════════════════════════ */
+
+.eu-shell{min-height:100vh;display:flex;flex-direction:column;background:var(--eu-bg)}
+
+/* Header */
+.eu-hd{background:var(--eu-paper);border-bottom:1px solid var(--eu-line);padding:18px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.eu-brand{display:flex;align-items:center;gap:14px}
+.eu-mark{width:34px;height:34px;background:var(--crimson);clip-path:polygon(50% 6%,94% 86%,6% 86%);position:relative}
+.eu-mark::after{content:'';position:absolute;inset:6px;background:var(--eu-paper);clip-path:polygon(50% 12%,88% 80%,12% 80%)}
+.eu-brand-text{display:flex;flex-direction:column;line-height:1}
+.eu-brand-name{font-family:var(--cond);font-size:18px;font-weight:800;letter-spacing:1.5px;color:var(--eu-ink);text-transform:uppercase}
+.eu-brand-tag{font-family:var(--mono);font-size:9.5px;letter-spacing:2.5px;color:var(--crimson);text-transform:uppercase;font-weight:700;margin-top:3px}
+.eu-hd-actions{display:flex;gap:12px;align-items:center}
+.eu-hd-link{font-family:var(--sans);font-size:13.5px;color:var(--eu-ink-2);font-weight:500;padding:8px 16px;border-radius:3px;transition:all .15s}
+.eu-hd-link:hover{background:var(--eu-tile-hover);color:var(--eu-ink);text-decoration:none}
+.eu-hd-link.primary{background:var(--crimson);color:#fff;font-weight:600}
+.eu-hd-link.primary:hover{background:var(--crimson-hover);color:#fff}
+.eu-admin-link{font-family:var(--mono);font-size:10px;color:var(--eu-ink-4);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;padding:6px 10px;border:1px solid var(--eu-line-2);border-radius:3px}
+.eu-admin-link:hover{color:var(--crimson);border-color:var(--crimson);text-decoration:none}
+
+/* Content container */
+.eu-main{flex:1;display:flex;flex-direction:column;align-items:center;padding:40px 24px 80px}
+.eu-container{width:100%;max-width:840px}
+.eu-container.wide{max-width:1120px}
+
+/* Hero (landing) */
+.eu-hero{text-align:center;margin:36px 0 48px}
+.eu-hero-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--crimson);text-transform:uppercase;font-weight:700;margin-bottom:14px;display:inline-flex;align-items:center;gap:10px}
+.eu-hero-eyebrow::before,.eu-hero-eyebrow::after{content:'';display:inline-block;width:18px;height:1px;background:var(--crimson)}
+.eu-hero-title{font-family:var(--serif);font-size:54px;font-weight:500;line-height:1.05;letter-spacing:-1.5px;color:var(--eu-ink);margin-bottom:14px}
+.eu-hero-sub{font-family:var(--serif);font-size:19px;font-weight:400;font-style:italic;color:var(--eu-ink-3);max-width:580px;margin:0 auto;line-height:1.5}
+
+/* Step indicator */
+.eu-steps{display:flex;align-items:center;justify-content:center;gap:0;margin:0 auto 42px;max-width:560px}
+.eu-step{display:flex;align-items:center;gap:8px;flex:1}
+.eu-step:last-child{flex:0}
+.eu-step-num{width:30px;height:30px;border-radius:50%;background:var(--eu-paper);border:1.5px solid var(--eu-line-2);font-family:var(--mono);font-size:12px;font-weight:700;color:var(--eu-ink-3);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .25s}
+.eu-step-line{flex:1;height:1.5px;background:var(--eu-line-2);transition:background .25s}
+.eu-step.done .eu-step-num{background:var(--crimson);border-color:var(--crimson);color:#fff}
+.eu-step.done .eu-step-line{background:var(--crimson)}
+.eu-step.current .eu-step-num{background:var(--eu-paper);border-color:var(--crimson);color:var(--crimson);box-shadow:0 0 0 4px var(--crimson-soft)}
+
+/* Question card */
+.eu-question{margin-bottom:34px;text-align:center}
+.eu-question-eye{font-family:var(--mono);font-size:10.5px;letter-spacing:2.5px;color:var(--crimson);text-transform:uppercase;font-weight:700;margin-bottom:10px;display:block}
+.eu-question-title{font-family:var(--serif);font-size:34px;font-weight:500;line-height:1.15;letter-spacing:-.8px;color:var(--eu-ink);margin-bottom:8px}
+.eu-question-sub{font-family:var(--sans);font-size:14px;color:var(--eu-ink-3);max-width:480px;margin:0 auto;line-height:1.55}
+
+/* Tile grid (used for picking category, sub-category, urgency) */
+.eu-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:30px}
+.eu-tiles.compact{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:11px}
+.eu-tile{background:var(--eu-paper);border:1.5px solid var(--eu-line);border-radius:4px;padding:24px 20px;cursor:pointer;text-align:center;transition:all .15s;position:relative;overflow:hidden}
+.eu-tile:hover{border-color:var(--crimson);background:var(--eu-tile-hover);transform:translateY(-1px)}
+.eu-tile.selected{border-color:var(--crimson);background:var(--crimson-soft);box-shadow:inset 0 -3px 0 var(--crimson)}
+.eu-tile-ic{font-size:30px;margin-bottom:12px;display:block;line-height:1;color:var(--crimson)}
+.eu-tile-title{font-family:var(--cond);font-size:16px;font-weight:700;letter-spacing:.4px;color:var(--eu-ink);text-transform:uppercase;margin-bottom:5px}
+.eu-tile-desc{font-size:12.5px;color:var(--eu-ink-3);line-height:1.45}
+
+/* Urgency tiles get distinct color treatment */
+.eu-urg-1{border-left:3px solid var(--red)}
+.eu-urg-1:hover, .eu-urg-1.selected{border-left-color:var(--red);background:var(--red-soft)}
+.eu-urg-2{border-left:3px solid var(--amber)}
+.eu-urg-2:hover, .eu-urg-2.selected{border-left-color:var(--amber);background:var(--amber-soft)}
+.eu-urg-3{border-left:3px solid var(--blue)}
+.eu-urg-3:hover, .eu-urg-3.selected{border-left-color:var(--blue);background:var(--blue-soft)}
+.eu-urg-4{border-left:3px solid var(--green)}
+.eu-urg-4:hover, .eu-urg-4.selected{border-left-color:var(--green);background:var(--green-soft)}
+
+/* Form panel */
+.eu-form{background:var(--eu-paper);border:1px solid var(--eu-line);border-radius:4px;padding:32px;margin-bottom:24px}
+.eu-form-row{margin-bottom:22px}
+.eu-form-row:last-child{margin-bottom:0}
+.eu-label{display:block;font-family:var(--mono);font-size:10px;font-weight:700;color:var(--eu-ink-2);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:8px}
+.eu-label .req{color:var(--crimson)}
+.eu-input,.eu-textarea,.eu-select{width:100%;padding:11px 14px;border:1.5px solid var(--eu-line-2);border-radius:3px;background:var(--eu-paper-2);font-size:14.5px;color:var(--eu-ink);transition:all .15s;font-family:var(--sans);outline:none;line-height:1.5}
+.eu-input:focus,.eu-textarea:focus,.eu-select:focus{border-color:var(--crimson);background:var(--eu-paper);box-shadow:0 0 0 3px var(--crimson-soft)}
+.eu-textarea{min-height:140px;resize:vertical;font-family:var(--sans);line-height:1.6}
+.eu-input::placeholder,.eu-textarea::placeholder{color:var(--eu-ink-4)}
+.eu-form-help{font-size:12.5px;color:var(--eu-ink-3);margin-top:6px;font-style:italic}
+.eu-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:600px){.eu-form-grid{grid-template-columns:1fr}}
+
+/* File upload */
+.eu-file{position:relative;border:1.5px dashed var(--eu-line-2);border-radius:3px;padding:24px;text-align:center;cursor:pointer;transition:all .15s;background:var(--eu-paper-2)}
+.eu-file:hover{border-color:var(--crimson);background:var(--eu-tile-hover)}
+.eu-file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.eu-file-text{font-size:13.5px;color:var(--eu-ink-2)}
+.eu-file-text strong{color:var(--crimson);font-weight:600}
+.eu-file-hint{font-size:11.5px;color:var(--eu-ink-3);margin-top:4px}
+.eu-file-attached{padding:14px;background:var(--green-soft);border:1px solid var(--green);border-radius:3px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--green);margin-top:10px}
+
+/* Buttons */
+.eu-btn-row{display:flex;gap:12px;justify-content:space-between;margin-top:30px}
+.eu-btn-row.center{justify-content:center}
+.eu-btn{padding:14px 28px;border-radius:3px;font-family:var(--cond);font-size:14px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;transition:all .15s;display:inline-flex;align-items:center;gap:8px;cursor:pointer;border:1.5px solid transparent}
+.eu-btn-primary{background:var(--crimson);color:#fff}
+.eu-btn-primary:hover{background:var(--crimson-hover);transform:translateY(-1px);box-shadow:0 4px 12px rgba(200,16,46,.25)}
+.eu-btn-primary:disabled{background:var(--eu-line-2);cursor:not-allowed;transform:none;box-shadow:none;color:var(--eu-ink-4)}
+.eu-btn-ghost{background:transparent;color:var(--eu-ink-2);border:1.5px solid var(--eu-line-2)}
+.eu-btn-ghost:hover{border-color:var(--eu-ink-3);color:var(--eu-ink)}
+.eu-btn-link{padding:14px 6px;color:var(--eu-ink-3);font-family:var(--sans);font-weight:500;text-transform:none;letter-spacing:0;font-size:13px}
+.eu-btn-link:hover{color:var(--crimson)}
+
+/* Success screen */
+.eu-success{text-align:center;padding:60px 30px;background:var(--eu-paper);border:1px solid var(--eu-line);border-radius:4px;border-top:4px solid var(--green)}
+.eu-success-mark{width:80px;height:80px;background:var(--green-soft);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;color:var(--green);font-size:36px;font-weight:700}
+.eu-success-title{font-family:var(--serif);font-size:38px;font-weight:500;letter-spacing:-.8px;color:var(--eu-ink);margin-bottom:14px;line-height:1.1}
+.eu-success-id{font-family:var(--mono);font-size:13px;letter-spacing:1.5px;color:var(--crimson);background:var(--crimson-soft);padding:6px 16px;border-radius:3px;display:inline-block;margin-bottom:20px;font-weight:700}
+.eu-success-msg{font-family:var(--serif);font-size:17px;color:var(--eu-ink-2);max-width:480px;margin:0 auto 30px;line-height:1.5;font-style:italic}
+.eu-success-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;text-align:left;background:var(--eu-paper-2);border-radius:3px;padding:20px;margin-bottom:30px}
+.eu-success-meta-row{}
+.eu-success-meta-lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;color:var(--eu-ink-3);text-transform:uppercase;font-weight:700;margin-bottom:3px}
+.eu-success-meta-val{font-size:14px;color:var(--eu-ink);font-weight:500}
+
+/* My Tickets list */
+.eu-tickets-list{display:flex;flex-direction:column;gap:12px}
+.eu-ticket-card{background:var(--eu-paper);border:1px solid var(--eu-line);border-radius:4px;padding:20px 22px;display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;transition:all .15s;border-left:3px solid var(--eu-line-2);cursor:pointer}
+.eu-ticket-card:hover{border-color:var(--crimson);transform:translateX(2px)}
+.eu-ticket-card.s-new{border-left-color:var(--blue)}
+.eu-ticket-card.s-progress{border-left-color:var(--amber)}
+.eu-ticket-card.s-waiting{border-left-color:var(--purple)}
+.eu-ticket-card.s-resolved{border-left-color:var(--green);opacity:.85}
+.eu-ticket-id{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--crimson);background:var(--crimson-soft);padding:4px 9px;border-radius:3px;letter-spacing:.5px}
+.eu-ticket-body{min-width:0}
+.eu-ticket-title{font-family:var(--cond);font-size:17px;font-weight:700;color:var(--eu-ink);margin-bottom:4px;letter-spacing:.3px;text-transform:uppercase}
+.eu-ticket-meta{font-size:12.5px;color:var(--eu-ink-3);display:flex;gap:14px;flex-wrap:wrap}
+.eu-ticket-status{font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;padding:5px 10px;border-radius:3px;border:1px solid;white-space:nowrap}
+.eu-status-new{background:var(--blue-soft);color:var(--blue);border-color:var(--blue)}
+.eu-status-progress{background:var(--amber-soft);color:var(--amber);border-color:var(--amber)}
+.eu-status-waiting{background:var(--purple-soft);color:var(--purple);border-color:var(--purple)}
+.eu-status-resolved{background:var(--green-soft);color:var(--green);border-color:var(--green)}
+
+/* Empty state */
+.eu-empty{text-align:center;padding:80px 30px;color:var(--eu-ink-3);background:var(--eu-paper);border:1px dashed var(--eu-line-2);border-radius:4px}
+.eu-empty-ic{font-size:48px;color:var(--crimson);opacity:.5;margin-bottom:16px}
+.eu-empty-title{font-family:var(--serif);font-size:24px;font-weight:500;color:var(--eu-ink);margin-bottom:8px}
+.eu-empty-sub{font-size:14.5px;color:var(--eu-ink-3);margin-bottom:24px}
+
+/* Reassurance footer banner */
+.eu-reassure{background:var(--eu-paper);border:1px solid var(--eu-line);border-left:3px solid var(--crimson);border-radius:3px;padding:14px 18px;margin:24px 0;display:flex;gap:12px;align-items:flex-start;font-size:13px;color:var(--eu-ink-2);line-height:1.5}
+.eu-reassure-ic{color:var(--crimson);font-size:16px;flex-shrink:0;margin-top:1px;font-weight:700}
+
+/* Footer */
+.eu-ft{padding:30px 28px;border-top:1px solid var(--eu-line);text-align:center;font-size:11.5px;color:var(--eu-ink-3);font-family:var(--mono);letter-spacing:1.2px;text-transform:uppercase}
+
+/* ═══════════════════════════════════════════════════════════════
+   IT-ADMIN SIDE — dark, dense, machine-shop confidence
+   ═══════════════════════════════════════════════════════════════ */
+
+body.admin-mode{background:var(--ad-bg);color:var(--ad-text)}
+
+.ad-shell{min-height:100vh;display:grid;grid-template-rows:auto 1fr;background:var(--ad-bg);color:var(--ad-text)}
+
+/* Top bar */
+.ad-top{background:var(--ad-surface);border-bottom:1px solid var(--ad-border);padding:12px 22px;display:flex;align-items:center;gap:18px;position:sticky;top:0;z-index:50}
+.ad-brand{display:flex;align-items:center;gap:11px}
+.ad-mark{width:26px;height:26px;background:var(--crimson);clip-path:polygon(50% 6%,94% 86%,6% 86%);position:relative}
+.ad-mark::after{content:'';position:absolute;inset:5px;background:var(--ad-surface);clip-path:polygon(50% 12%,88% 80%,12% 80%)}
+.ad-brand-text{display:flex;flex-direction:column;line-height:1}
+.ad-brand-name{font-family:var(--cond);font-size:14px;font-weight:800;letter-spacing:1.5px;color:var(--ad-text);text-transform:uppercase}
+.ad-brand-tag{font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--crimson);text-transform:uppercase;font-weight:700}
+.ad-divider{width:1px;height:22px;background:var(--ad-border-2)}
+.ad-search{flex:1;max-width:420px;position:relative}
+.ad-search input{width:100%;padding:7px 12px 7px 32px;border:1px solid var(--ad-border-2);border-radius:3px;background:var(--ad-surface-2);color:var(--ad-text);font-family:var(--mono);font-size:12px;outline:none;height:30px}
+.ad-search input:focus{border-color:var(--crimson);background:var(--ad-surface-3)}
+.ad-search::before{content:'⌕';position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--ad-text-3);font-family:var(--mono);font-size:14px}
+.ad-top-actions{display:flex;gap:6px;align-items:center;margin-left:auto}
+.ad-stat-pill{display:inline-flex;align-items:center;gap:6px;padding:0 9px;height:28px;border:1px solid var(--ad-border-2);border-radius:3px;font-family:var(--mono);font-size:10px;letter-spacing:.8px;color:var(--ad-text-2);background:var(--ad-surface-2);text-transform:uppercase;font-weight:600}
+.ad-stat-pill .ad-stat-num{color:var(--crimson);font-weight:700;font-size:11px}
+.ad-stat-pill.warn .ad-stat-num{color:var(--amber)}
+.ad-stat-pill.crit .ad-stat-num{color:var(--red)}
+
+/* Body layout */
+.ad-body{display:grid;grid-template-columns:200px 1fr;height:calc(100vh - 53px)}
+.ad-side{background:var(--ad-surface);border-right:1px solid var(--ad-border);overflow-y:auto;padding:14px 0}
+.ad-side-section{padding:12px 18px 6px}
+.ad-side-label{font-family:var(--mono);font-size:8.5px;letter-spacing:2px;color:var(--ad-text-3);text-transform:uppercase;font-weight:700;margin-bottom:8px}
+.ad-side-item{display:flex;align-items:center;gap:9px;padding:8px 18px;font-family:var(--cond);font-size:12.5px;font-weight:600;letter-spacing:.5px;color:var(--ad-text-2);text-transform:uppercase;cursor:pointer;border-left:2px solid transparent;transition:all .1s}
+.ad-side-item:hover{background:var(--ad-surface-2);color:var(--ad-text)}
+.ad-side-item.active{background:var(--ad-surface-2);color:var(--crimson);border-left-color:var(--crimson)}
+.ad-side-item .ad-side-count{margin-left:auto;font-family:var(--mono);font-size:10px;font-weight:700;color:var(--ad-text-3);background:var(--ad-surface-3);padding:1px 7px;border-radius:9px;letter-spacing:0}
+.ad-side-item.active .ad-side-count{background:var(--crimson);color:#fff}
+
+.ad-main{overflow-y:auto;padding:18px 22px}
+
+/* Page header */
+.ad-ph{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--ad-border);position:relative;gap:18px}
+.ad-ph::after{content:'';position:absolute;left:0;bottom:-1px;width:60px;height:3px;background:var(--crimson)}
+.ad-ph-eye{font-family:var(--mono);font-size:9px;letter-spacing:2.8px;color:var(--crimson);font-weight:700;text-transform:uppercase;display:inline-flex;align-items:center;gap:8px;margin-bottom:5px}
+.ad-ph-eye::before{content:'';display:inline-block;width:14px;height:1px;background:var(--crimson)}
+.ad-ph-title{font-family:var(--cond);font-size:24px;font-weight:800;color:var(--ad-text);text-transform:uppercase;letter-spacing:.5px;line-height:1.05}
+.ad-ph-sub{font-size:12px;color:var(--ad-text-3);margin-top:4px;line-height:1.5;max-width:680px}
+.ad-ph-actions{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;flex-shrink:0}
+
+/* Buttons */
+.ad-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:3px;font-family:var(--cond);font-size:11px;font-weight:700;letter-spacing:.7px;cursor:pointer;border:1px solid var(--ad-border-3);background:var(--ad-surface-2);color:var(--ad-text-2);text-transform:uppercase;white-space:nowrap;transition:all .1s;height:28px;line-height:1.4}
+.ad-btn:hover{background:var(--ad-surface-3);color:var(--ad-text)}
+.ad-btn-primary{background:var(--crimson);border-color:var(--crimson);color:#fff;box-shadow:inset 0 -2px 0 rgba(0,0,0,.18)}
+.ad-btn-primary:hover{background:var(--crimson-hover);border-color:var(--crimson-hover);color:#fff}
+.ad-btn-ghost{background:transparent;border:1px solid rgba(200,16,46,.4);color:var(--crimson)}
+.ad-btn-ghost:hover{background:rgba(200,16,46,.18);color:var(--crimson-bright);border-color:var(--crimson-bright)}
+.ad-btn-sm{padding:4px 10px;font-size:10px;height:24px}
+.ad-btn-success{background:var(--green);border-color:var(--green);color:#fff}
+.ad-btn-success:hover{background:#0d8a47;border-color:#0d8a47}
+.ad-btn-danger{background:var(--ad-surface-2);border-color:rgba(183,37,36,.5);color:#e85959}
+.ad-btn-danger:hover{background:rgba(183,37,36,.18);border-color:#e85959}
+
+/* KPI strip */
+.ad-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+.ad-kpi{background:var(--ad-surface);border:1px solid var(--ad-border);border-radius:3px;padding:12px 14px;border-left:3px solid var(--ad-border-3);transition:all .12s}
+.ad-kpi:hover{border-color:var(--ad-border-2)}
+.ad-kpi.crimson{border-left-color:var(--crimson)}
+.ad-kpi.green{border-left-color:var(--green)}
+.ad-kpi.amber{border-left-color:var(--amber)}
+.ad-kpi.red{border-left-color:var(--red)}
+.ad-kpi.blue{border-left-color:var(--blue)}
+.ad-kpi.purple{border-left-color:var(--purple)}
+.ad-kpi-l{font-family:var(--mono);font-size:8.5px;color:var(--ad-text-3);margin-bottom:5px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
+.ad-kpi-v{font-family:var(--cond);font-size:28px;font-weight:800;line-height:1;letter-spacing:-.5px;color:var(--ad-text)}
+.ad-kpi-s{font-family:var(--mono);font-size:9px;color:var(--ad-text-3);margin-top:4px;letter-spacing:.5px;text-transform:uppercase}
+
+/* Filter bar */
+.ad-filter{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:9px 12px;background:var(--ad-surface);border:1px solid var(--ad-border);border-radius:3px;margin-bottom:14px;border-left:2px solid var(--ad-border-3)}
+.ad-filter-input{padding:5px 10px;border:1px solid var(--ad-border-2);border-radius:3px;background:var(--ad-surface-2);color:var(--ad-text-2);font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.5px;outline:none;height:26px;text-transform:uppercase}
+.ad-filter-input:focus{border-color:var(--crimson);background:var(--ad-surface-3);color:var(--ad-text)}
+.ad-filter input[type=text]{text-transform:none}
+
+/* Kanban layout */
+.ad-kanban{display:grid;grid-template-columns:repeat(4,minmax(260px,1fr));gap:12px;margin-top:6px}
+.ad-col{background:var(--ad-surface);border:1px solid var(--ad-border);border-radius:3px;display:flex;flex-direction:column;min-height:300px;border-top:3px solid;overflow:hidden}
+.ad-col[data-status="new"]{border-top-color:var(--blue)}
+.ad-col[data-status="progress"]{border-top-color:var(--amber)}
+.ad-col[data-status="waiting"]{border-top-color:var(--purple)}
+.ad-col[data-status="resolved"]{border-top-color:var(--green)}
+.ad-col-hd{padding:11px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--ad-border);background:var(--ad-surface-2)}
+.ad-col-name{font-family:var(--cond);font-size:12px;font-weight:800;letter-spacing:1.5px;color:var(--ad-text);text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.ad-col-cnt{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--ad-text-3);background:var(--ad-surface-3);padding:1px 7px;border-radius:9px}
+.ad-col-body{padding:8px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:calc(100vh - 290px)}
+
+.ad-card{background:var(--ad-surface-2);border:1px solid var(--ad-border-2);border-radius:3px;padding:11px 12px;cursor:grab;transition:all .12s;border-left:3px solid transparent;position:relative}
+.ad-card:hover{background:var(--ad-surface-3);border-color:var(--ad-border-3);transform:translateX(1px)}
+.ad-card.dragging{opacity:.4;cursor:grabbing}
+.ad-card.p1{border-left-color:var(--red)}
+.ad-card.p2{border-left-color:#e07020}
+.ad-card.p3{border-left-color:var(--amber)}
+.ad-card.p4{border-left-color:var(--ad-text-3)}
+.ad-card-hd{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+.ad-card-id{font-family:var(--mono);font-size:9.5px;color:var(--ad-text-3);font-weight:700;letter-spacing:.3px}
+.ad-card-pri{font-family:var(--mono);font-size:8.5px;font-weight:700;padding:1px 6px;border-radius:2px;letter-spacing:.8px;text-transform:uppercase;border:1px solid}
+.ad-card-pri.p1{background:var(--red);color:#fff;border-color:var(--red)}
+.ad-card-pri.p2{background:#e07020;color:#fff;border-color:#e07020}
+.ad-card-pri.p3{background:rgba(180,127,0,.2);color:var(--amber);border-color:rgba(180,127,0,.5)}
+.ad-card-pri.p4{background:var(--ad-surface-3);color:var(--ad-text-3);border-color:var(--ad-border-3)}
+.ad-card-cat{font-family:var(--mono);font-size:8.5px;font-weight:700;color:var(--ad-text-3);background:var(--ad-surface-3);padding:1px 6px;border-radius:2px;letter-spacing:.6px;text-transform:uppercase;border:1px solid var(--ad-border-2)}
+.ad-card-sla{font-family:var(--mono);font-size:8.5px;font-weight:700;padding:1px 6px;border-radius:2px;letter-spacing:.6px;text-transform:uppercase;margin-left:auto}
+.ad-card-sla.ok{color:var(--green)}
+.ad-card-sla.risk{color:var(--amber);background:rgba(180,127,0,.15)}
+.ad-card-sla.breach{color:#fff;background:var(--red);font-weight:800}
+.ad-card-title{font-family:var(--cond);font-size:13.5px;font-weight:700;color:var(--ad-text);line-height:1.25;margin-bottom:6px;letter-spacing:.3px;text-transform:uppercase;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ad-card-foot{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;color:var(--ad-text-3);font-family:var(--mono);gap:8px;flex-wrap:wrap}
+.ad-card-req{display:flex;align-items:center;gap:6px;min-width:0;flex:1}
+.ad-card-avatar{width:18px;height:18px;border-radius:50%;background:var(--ad-surface-3);color:var(--ad-text);font-family:var(--cond);font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:0;border:1px solid var(--ad-border-3);text-transform:uppercase}
+.ad-card-req-name{font-family:var(--mono);font-size:10px;color:var(--ad-text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.2px}
+.ad-card-time{font-family:var(--mono);font-size:9.5px;color:var(--ad-text-3);white-space:nowrap;letter-spacing:.3px}
+
+.ad-col.drag-over{background:rgba(200,16,46,.05);border-color:var(--crimson)}
+.ad-col.drag-over .ad-col-body{outline:1px dashed var(--crimson);outline-offset:-4px;border-radius:2px}
+
+/* List view */
+.ad-tbl-wrap{border:1px solid var(--ad-border-2);border-radius:3px;background:var(--ad-surface);overflow-x:auto}
+.ad-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.ad-tbl th{text-align:left;padding:10px 12px;border-bottom:2px solid var(--crimson);font-family:var(--mono);font-size:9px;color:var(--ad-text-2);text-transform:uppercase;letter-spacing:1.5px;background:linear-gradient(180deg,var(--ad-surface-3),var(--ad-surface-2));font-weight:700;white-space:nowrap;border-right:1px solid var(--ad-border)}
+.ad-tbl th:last-child{border-right:none}
+.ad-tbl td{padding:8px 12px;border-bottom:1px solid var(--ad-border);color:var(--ad-text-2);vertical-align:middle;font-size:11.5px}
+.ad-tbl tbody tr:hover td{background:rgba(200,16,46,.05);color:var(--ad-text);cursor:pointer}
+.ad-tbl tbody tr:nth-child(even) td{background:rgba(255,255,255,.012)}
+.ad-tbl tbody tr:nth-child(even):hover td{background:rgba(200,16,46,.05)}
+.ad-tbl-fw{font-weight:700;color:var(--ad-text);font-family:var(--cond);letter-spacing:.4px}
+.ad-tbl-mono{font-family:var(--mono);font-size:11px;color:var(--ad-text-2);letter-spacing:.2px}
+
+/* Drawer (ticket detail) */
+.ad-drawer-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:90;display:none;backdrop-filter:blur(3px)}
+.ad-drawer-bg.open{display:block}
+.ad-drawer{position:fixed;top:0;right:0;height:100vh;width:680px;max-width:96vw;background:var(--ad-surface);border-left:1px solid var(--ad-border-3);z-index:91;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-12px 0 60px rgba(0,0,0,.5)}
+.ad-drawer.open{transform:translateX(0)}
+.ad-drawer-hd{padding:14px 20px;border-bottom:1px solid var(--ad-border);display:flex;align-items:center;justify-content:space-between;background:var(--ad-surface-2);position:sticky;top:0;z-index:2}
+.ad-drawer-id{font-family:var(--mono);font-size:11px;color:var(--crimson);font-weight:700;letter-spacing:.5px;background:rgba(200,16,46,.12);padding:3px 9px;border-radius:3px}
+.ad-drawer-close{background:none;border:none;color:var(--ad-text-3);font-size:22px;cursor:pointer;padding:4px 10px;border-radius:3px;line-height:1}
+.ad-drawer-close:hover{background:var(--ad-surface-3);color:var(--crimson)}
+.ad-drawer-body{flex:1;overflow-y:auto;padding:22px 24px}
+
+.ad-drawer-title{font-family:var(--cond);font-size:22px;font-weight:800;color:var(--ad-text);text-transform:uppercase;letter-spacing:.4px;line-height:1.15;margin-bottom:14px}
+.ad-drawer-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 22px;padding:14px;background:var(--ad-surface-2);border:1px solid var(--ad-border);border-radius:3px;margin-bottom:18px;border-left:2px solid var(--ad-border-3)}
+.ad-meta-row{}
+.ad-meta-lbl{font-family:var(--mono);font-size:8.5px;color:var(--ad-text-3);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:3px}
+.ad-meta-val{font-size:13px;color:var(--ad-text);font-weight:600}
+.ad-meta-val select, .ad-meta-val input{margin-top:2px;padding:5px 9px;background:var(--ad-surface-3);border:1px solid var(--ad-border-2);color:var(--ad-text);border-radius:3px;font-size:12px;width:100%;font-family:var(--mono);outline:none;height:28px}
+.ad-meta-val select:focus, .ad-meta-val input:focus{border-color:var(--crimson)}
+
+.ad-section{margin-bottom:24px}
+.ad-section-hd{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--crimson);text-transform:uppercase;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.ad-section-hd::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--crimson),transparent)}
+.ad-desc-box{background:var(--ad-surface-2);border:1px solid var(--ad-border);border-radius:3px;padding:14px 16px;font-size:13px;color:var(--ad-text-2);line-height:1.6;white-space:pre-wrap;border-left:2px solid var(--ad-border-3)}
+
+.ad-timeline{display:flex;flex-direction:column;gap:14px}
+.ad-event{display:grid;grid-template-columns:24px 1fr;gap:12px;position:relative}
+.ad-event::before{content:'';position:absolute;left:11px;top:24px;bottom:-14px;width:1.5px;background:var(--ad-border-2)}
+.ad-event:last-child::before{display:none}
+.ad-event-dot{width:24px;height:24px;border-radius:50%;background:var(--ad-surface-3);border:2px solid var(--ad-border-3);display:flex;align-items:center;justify-content:center;color:var(--ad-text-3);font-size:11px;font-weight:700;font-family:var(--mono);position:relative;z-index:1}
+.ad-event.reply .ad-event-dot{background:var(--crimson);border-color:var(--crimson);color:#fff}
+.ad-event.note .ad-event-dot{background:var(--amber);border-color:var(--amber);color:#000}
+.ad-event.system .ad-event-dot{background:var(--ad-surface-3);border-color:var(--ad-border-3);color:var(--ad-text-3)}
+.ad-event-bd{background:var(--ad-surface-2);border:1px solid var(--ad-border);border-radius:3px;padding:10px 12px;font-size:12.5px;color:var(--ad-text-2);line-height:1.55}
+.ad-event.reply .ad-event-bd{border-left:2px solid var(--crimson)}
+.ad-event.note .ad-event-bd{border-left:2px solid var(--amber);background:rgba(180,127,0,.05)}
+.ad-event-meta{font-family:var(--mono);font-size:9.5px;color:var(--ad-text-3);letter-spacing:.5px;margin-bottom:4px;text-transform:uppercase;font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ad-event-author{color:var(--ad-text)}
+.ad-event-tag{font-family:var(--mono);font-size:8px;font-weight:700;padding:1px 5px;border-radius:2px;letter-spacing:.7px;text-transform:uppercase}
+.ad-event-tag.public{background:rgba(200,16,46,.18);color:var(--crimson-bright)}
+.ad-event-tag.internal{background:rgba(180,127,0,.18);color:var(--amber)}
+
+.ad-reply{margin-top:14px;background:var(--ad-surface-2);border:1px solid var(--ad-border-2);border-radius:3px;overflow:hidden;border-left:2px solid var(--ad-border-3)}
+.ad-reply-tabs{display:flex;border-bottom:1px solid var(--ad-border)}
+.ad-reply-tab{flex:1;padding:9px 14px;background:none;border:none;color:var(--ad-text-3);font-family:var(--cond);font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.ad-reply-tab:hover{color:var(--ad-text)}
+.ad-reply-tab.active{color:var(--crimson);border-bottom-color:var(--crimson)}
+.ad-reply-area{padding:12px 14px}
+.ad-reply textarea{width:100%;background:var(--ad-bg);border:1px solid var(--ad-border-2);border-radius:3px;padding:10px 12px;color:var(--ad-text);font-family:var(--sans);font-size:12.5px;line-height:1.55;outline:none;min-height:90px;resize:vertical}
+.ad-reply textarea:focus{border-color:var(--crimson)}
+.ad-reply-row{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px;flex-wrap:wrap}
+.ad-canned{font-family:var(--mono);font-size:9.5px;color:var(--ad-text-3);text-transform:uppercase;letter-spacing:1px;display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.ad-canned-btn{background:var(--ad-surface-3);border:1px solid var(--ad-border-2);color:var(--ad-text-2);padding:3px 8px;border-radius:2px;font-family:var(--mono);font-size:9.5px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;font-weight:600}
+.ad-canned-btn:hover{background:var(--crimson);color:#fff;border-color:var(--crimson)}
+
+.ad-similar{background:var(--ad-surface-2);border:1px solid var(--ad-border);border-radius:3px;padding:12px 14px;border-left:2px solid var(--blue)}
+.ad-similar-item{padding:7px 0;border-bottom:1px solid var(--ad-border);font-size:12px;color:var(--ad-text-2);cursor:pointer}
+.ad-similar-item:hover{color:var(--crimson)}
+.ad-similar-item:last-child{border-bottom:none}
+.ad-similar-id{font-family:var(--mono);font-size:10px;color:var(--ad-text-3);margin-right:8px}
+
+/* Empty state (admin) */
+.ad-empty{padding:48px 24px;text-align:center;color:var(--ad-text-3);font-size:12px;border:1px dashed var(--ad-border-3);border-radius:3px;background:var(--ad-surface);position:relative}
+.ad-empty::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:48px;height:2px;background:var(--crimson)}
+.ad-empty-ic{font-size:30px;margin-bottom:10px;color:var(--crimson);font-family:var(--mono);font-weight:700;letter-spacing:-2px;opacity:.5}
+.ad-empty-title{color:var(--ad-text);font-family:var(--cond);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+
+/* Small toast */
+.ad-toast{position:fixed;bottom:18px;right:18px;background:var(--ad-surface);border:1px solid var(--green);border-left:3px solid var(--green);color:var(--ad-text);padding:11px 16px;border-radius:3px;font-family:var(--cond);font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.5);transform:translateY(100px);opacity:0;transition:all .25s;display:flex;align-items:center;gap:10px}
+.ad-toast.show{transform:translateY(0);opacity:1}
+.ad-toast.err{border-color:var(--red);border-left-color:var(--red)}
+.ad-toast-ic{color:var(--green);font-size:14px}
+.ad-toast.err .ad-toast-ic{color:var(--red)}
+
+/* Login modal (admin entry) */
+.ad-login-bg{position:fixed;inset:0;background:rgba(11,13,15,.95);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)}
+.ad-login-bg.open{display:flex}
+.ad-login{background:var(--ad-surface);border:1px solid var(--ad-border-3);border-top:3px solid var(--crimson);border-radius:4px;padding:30px;max-width:380px;width:100%}
+.ad-login-mark{display:flex;align-items:center;gap:11px;margin-bottom:20px}
+.ad-login-mark .ad-mark{width:32px;height:32px}
+.ad-login-mark .ad-mark::after{inset:6px}
+.ad-login-title{font-family:var(--cond);font-size:18px;font-weight:800;color:var(--ad-text);letter-spacing:.5px;text-transform:uppercase}
+.ad-login-sub{font-family:var(--mono);font-size:9.5px;color:var(--crimson);letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-top:2px}
+.ad-login input{width:100%;padding:10px 13px;background:var(--ad-surface-2);border:1px solid var(--ad-border-2);color:var(--ad-text);border-radius:3px;font-family:var(--mono);font-size:13px;outline:none;margin-bottom:14px}
+.ad-login input:focus{border-color:var(--crimson)}
+.ad-login-err{font-family:var(--mono);font-size:10px;color:var(--red);margin-top:6px;letter-spacing:.5px;text-transform:uppercase;display:none}
+.ad-login-err.show{display:block}
+
+/* SLA color indicators inline */
+.ad-tbl .sla-ok{color:var(--green)}
+.ad-tbl .sla-risk{color:var(--amber);font-weight:700}
+.ad-tbl .sla-breach{color:#fff;background:var(--red);padding:1px 7px;border-radius:2px;font-weight:800}
+
+/* Print */
+@media print{.no-print,.ad-side,.ad-top,.ad-drawer-bg,.ad-drawer{display:none !important}.ad-main{padding:0 !important;overflow:visible !important}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     END-USER SHELL
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="eu-app" class="eu-shell">
+  <header class="eu-hd">
+    <div class="eu-brand" onclick="goEU('home')" style="cursor:pointer">
+      <div class="eu-mark"></div>
+      <div class="eu-brand-text">
+        <span class="eu-brand-name">Advanced Helpdesk</span>
+        <span class="eu-brand-tag">IT Support · Owasso</span>
+      </div>
+    </div>
+    <nav class="eu-hd-actions">
+      <a class="eu-hd-link" onclick="goEU('home')">Submit Ticket</a>
+      <a class="eu-hd-link" onclick="goEU('mine')">My Tickets</a>
+      <a class="eu-admin-link" onclick="openAdminLogin()">IT Login</a>
+    </nav>
+  </header>
+
+  <main class="eu-main">
+    <!-- HOME / WIZARD -->
+    <div id="eu-page-home" class="eu-page">
+      <div class="eu-container">
+        <!-- Hero shown only on step 0 -->
+        <div id="eu-hero" class="eu-hero">
+          <div class="eu-hero-eyebrow">Need a hand?</div>
+          <h1 class="eu-hero-title">We'll get you back to work, fast.</h1>
+          <p class="eu-hero-sub">Tell us what's broken in three quick questions. No tech jargon — just answer like you'd describe it to a coworker.</p>
+        </div>
+
+        <!-- Step indicator -->
+        <div class="eu-steps" id="eu-steps">
+          <div class="eu-step current" data-step="1"><div class="eu-step-num">1</div></div>
+          <div class="eu-step-line"></div>
+          <div class="eu-step" data-step="2"><div class="eu-step-num">2</div></div>
+          <div class="eu-step-line"></div>
+          <div class="eu-step" data-step="3"><div class="eu-step-num">3</div></div>
+          <div class="eu-step-line"></div>
+          <div class="eu-step" data-step="4"><div class="eu-step-num">4</div></div>
+          <div class="eu-step-line"></div>
+          <div class="eu-step" data-step="5"><div class="eu-step-num">5</div></div>
+        </div>
+
+        <!-- Wizard mount point -->
+        <div id="eu-wiz"></div>
+      </div>
+    </div>
+
+    <!-- MY TICKETS -->
+    <div id="eu-page-mine" class="eu-page hidden">
+      <div class="eu-container">
+        <div class="eu-question" style="text-align:left;margin-bottom:26px">
+          <span class="eu-question-eye">Your Activity</span>
+          <h1 class="eu-question-title" style="font-size:30px">My Tickets</h1>
+          <p class="eu-question-sub" style="margin:0">Tickets you've submitted, with their current status. Click any ticket to see the latest update from IT.</p>
+        </div>
+        <div id="eu-mine-list"></div>
+        <div class="eu-btn-row center" style="margin-top:30px">
+          <button class="eu-btn eu-btn-primary" onclick="goEU('home')">+ Submit a New Ticket</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TICKET DETAIL (end-user view) -->
+    <div id="eu-page-detail" class="eu-page hidden">
+      <div class="eu-container">
+        <div id="eu-detail"></div>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div id="eu-page-success" class="eu-page hidden">
+      <div class="eu-container">
+        <div id="eu-success"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="eu-ft">
+    Advanced Plastics &amp; Machining · IT Helpdesk · Confidential
+  </footer>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ADMIN LOGIN MODAL
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="ad-login-bg" id="ad-login-bg">
+  <div class="ad-login">
+    <div class="ad-login-mark">
+      <div class="ad-mark"></div>
+      <div>
+        <div class="ad-login-title">IT Manager Console</div>
+        <div class="ad-login-sub">Restricted Access</div>
+      </div>
+    </div>
+    <input type="password" id="ad-login-pw" placeholder="Access password..." onkeydown="if(event.key==='Enter')doAdminLogin()">
+    <div class="ad-login-err" id="ad-login-err">Incorrect password</div>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button class="eu-btn eu-btn-ghost" onclick="closeAdminLogin()" style="flex:1">Cancel</button>
+      <button class="eu-btn eu-btn-primary" onclick="doAdminLogin()" style="flex:1">Enter</button>
+    </div>
+    <p style="font-family:var(--mono);font-size:9px;color:var(--ad-text-3);text-align:center;margin-top:18px;letter-spacing:.5px">Default: <span style="color:var(--crimson)">advanced</span> · change in admin Settings</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     IT-ADMIN SHELL (initially hidden)
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="ad-app" class="ad-shell hidden">
+  <header class="ad-top">
+    <div class="ad-brand" onclick="goAD('triage')" style="cursor:pointer">
+      <div class="ad-mark"></div>
+      <div class="ad-brand-text">
+        <span class="ad-brand-name">Helpdesk Console</span>
+        <span class="ad-brand-tag">IT Manager</span>
+      </div>
+    </div>
+    <div class="ad-divider"></div>
+    <div class="ad-search"><input type="text" id="ad-search" placeholder="Search tickets — title, requester, ID, body…" oninput="renderAdmin()"></div>
+    <div class="ad-top-actions">
+      <span class="ad-stat-pill" id="ad-pill-open">Open <span class="ad-stat-num" id="ad-pill-open-n">0</span></span>
+      <span class="ad-stat-pill warn" id="ad-pill-risk">SLA Risk <span class="ad-stat-num" id="ad-pill-risk-n">0</span></span>
+      <span class="ad-stat-pill crit" id="ad-pill-breach">Breach <span class="ad-stat-num" id="ad-pill-breach-n">0</span></span>
+      <button class="ad-btn ad-btn-sm" onclick="exportAdmin('csv')" title="Export for Command Center import">⬇ CSV</button>
+      <button class="ad-btn ad-btn-sm" onclick="exportAdmin('json')" title="Full backup JSON">⬇ JSON</button>
+      <button class="ad-btn ad-btn-sm" onclick="goEU('home')">⤴ Exit Admin</button>
+    </div>
+  </header>
+
+  <div class="ad-body">
+    <aside class="ad-side">
+      <div class="ad-side-section">
+        <div class="ad-side-label">Workflow</div>
+        <div class="ad-side-item active" data-view="triage" onclick="goAD('triage')">⊞ Triage Board</div>
+        <div class="ad-side-item" data-view="today" onclick="goAD('today')">★ Today<span class="ad-side-count" id="ad-cnt-today">0</span></div>
+        <div class="ad-side-item" data-view="all" onclick="goAD('all')">≡ All Tickets<span class="ad-side-count" id="ad-cnt-all">0</span></div>
+      </div>
+      <div class="ad-side-section">
+        <div class="ad-side-label">Saved Filters</div>
+        <div class="ad-side-item" data-view="p1" onclick="goAD('p1')">! P1 Critical<span class="ad-side-count" id="ad-cnt-p1">0</span></div>
+        <div class="ad-side-item" data-view="aging" onclick="goAD('aging')">⧗ Aging &gt; 3 days<span class="ad-side-count" id="ad-cnt-aging">0</span></div>
+        <div class="ad-side-item" data-view="resolved" onclick="goAD('resolved')">✓ Resolved (30d)<span class="ad-side-count" id="ad-cnt-resolved">0</span></div>
+      </div>
+      <div class="ad-side-section">
+        <div class="ad-side-label">Output</div>
+        <div class="ad-side-item" data-view="analytics" onclick="goAD('analytics')">▦ Analytics</div>
+        <div class="ad-side-item" data-view="settings" onclick="goAD('settings')">⚙ Settings</div>
+      </div>
+    </aside>
+
+    <main class="ad-main" id="ad-main"></main>
+  </div>
+</div>
+
+<!-- Drawer (admin ticket detail) -->
+<div class="ad-drawer-bg" id="ad-drawer-bg" onclick="closeDrawer()"></div>
+<div class="ad-drawer" id="ad-drawer">
+  <div class="ad-drawer-hd">
+    <div style="display:flex;align-items:center;gap:10px"><span class="ad-drawer-id" id="ad-drawer-id">#0</span><span style="font-family:var(--mono);font-size:10px;color:var(--ad-text-3);letter-spacing:1px;text-transform:uppercase" id="ad-drawer-status">NEW</span></div>
+    <button class="ad-drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="ad-drawer-body" id="ad-drawer-body"></div>
+</div>
+
+<div class="ad-toast" id="ad-toast"><span class="ad-toast-ic">✓</span><span id="ad-toast-msg">Saved</span></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DATA LAYER
+// ═══════════════════════════════════════════════════════════════
+
+const STORE_KEY='advHelpdeskV1';
+const ADMIN_PW_KEY='advHelpdeskAdminPw';
+
+let DB={
+  tickets:[],
+  nextId:1,
+  settings:{
+    adminPassword:'advanced',
+    orgName:'Advanced Plastics & Machining',
+    sla:{P1:1, P2:4, P3:24, P4:72}, // hours
+    cannedResponses:[
+      {label:'Acknowledged', body:"Thanks for reaching out — I've received your ticket and am looking into it now. I'll follow up shortly with next steps."},
+      {label:'More info needed', body:"To help me diagnose this faster, could you confirm: (1) When did this start? (2) Does it happen every time, or only sometimes? (3) Have you tried restarting? Reply when you have a moment — thanks."},
+      {label:'Working on it', body:"Quick update: I'm actively troubleshooting this issue. I'll have more information within the SLA window. Appreciate your patience."},
+      {label:'Need access to your machine', body:"I'd like to remote into your machine to look at this. Are you free in the next 30 minutes? If so, please leave your computer on and let me know."},
+      {label:'Resolved — please verify', body:"This should be fixed on my end. Could you give it a try and reply to confirm everything's working as expected? If not, I'll keep digging."},
+    ]
+  }
+};
+
+function loadDB(){
+  try{
+    const raw=localStorage.getItem(STORE_KEY);
+    if(raw){
+      const parsed=JSON.parse(raw);
+      // Merge to preserve any new defaults added later
+      DB={...DB, ...parsed, settings:{...DB.settings, ...(parsed.settings||{})}};
+      if(!Array.isArray(DB.tickets))DB.tickets=[];
+    }
+  }catch(e){console.error('loadDB:',e)}
+}
+function saveDB(){try{localStorage.setItem(STORE_KEY, JSON.stringify(DB));}catch(e){console.error('saveDB:',e)}}
+
+// Helpers
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nowISO=()=>new Date().toISOString();
+const fmtRelative=(iso)=>{
+  if(!iso)return '—';
+  const ms=Date.now()-new Date(iso).getTime();
+  const min=Math.floor(ms/60000);
+  if(min<1)return 'just now';
+  if(min<60)return `${min}m ago`;
+  const hr=Math.floor(min/60);
+  if(hr<24)return `${hr}h ago`;
+  const d=Math.floor(hr/24);
+  if(d<7)return `${d}d ago`;
+  return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+};
+const fmtDateTime=iso=>{
+  if(!iso)return '—';
+  const d=new Date(iso);
+  return d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+};
+const initials=name=>{
+  if(!name)return '?';
+  const parts=String(name).trim().split(/\s+/);
+  return ((parts[0]||'')[0]||'')+((parts[1]||'')[0]||'');
+};
+const slaInfo=(t)=>{
+  // Returns {state:'ok'|'risk'|'breach', percent, label}
+  if(t.status==='resolved'){
+    return {state:'ok', percent:0, label:'closed'};
+  }
+  const slaHours=(DB.settings.sla||{})[t.priority]||24;
+  const ageHrs=(Date.now()-new Date(t.createdAt).getTime())/3600000;
+  const pct=Math.min(100, Math.round(ageHrs/slaHours*100));
+  if(pct>=100)return {state:'breach', percent:pct, label:`+${Math.round(ageHrs-slaHours)}h breach`};
+  if(pct>=75)return {state:'risk', percent:pct, label:`${pct}% sla`};
+  return {state:'ok', percent:pct, label:`${pct}% sla`};
+};
+
+// ═══════════════════════════════════════════════════════════════
+// END-USER WIZARD (5 steps)
+// ═══════════════════════════════════════════════════════════════
+
+const CATS=[
+  {id:'computer', icon:'▢', title:'Computer / Laptop', desc:"Won't turn on, slow, locked out, or weird behavior",
+    sub:[
+      {id:'no-boot', title:"Won't turn on", desc:'No power, no display, no signs of life'},
+      {id:'slow', title:'Running slowly', desc:'Apps freeze, takes forever to load anything'},
+      {id:'crash', title:'Crashing or BSOD', desc:'Restarts on its own or shows blue screen'},
+      {id:'locked', title:'Locked out / Password', desc:"Can't log in or password won't work"},
+      {id:'damage', title:'Physical damage', desc:'Cracked screen, spilled liquid, broken keys'},
+      {id:'other', title:'Something else', desc:"It's a computer issue but doesn't fit above"}
+    ]},
+  {id:'software', icon:'⚙', title:'Software / Application', desc:'A specific program is broken or behaving oddly',
+    sub:[
+      {id:'install', title:'Need software installed', desc:'Need a new app/license set up for me'},
+      {id:'crashing', title:'App keeps crashing', desc:'Closes itself or freezes when I use it'},
+      {id:'error', title:'Getting an error message', desc:'See an error popup I don\'t understand'},
+      {id:'license', title:'License or activation', desc:"Software says it's expired or unlicensed"},
+      {id:'data', title:'Lost work / saved file', desc:"Can't find a file I made or saved"},
+      {id:'other', title:'Something else', desc:'Software issue not listed above'}
+    ]},
+  {id:'network', icon:'⌬', title:'Network / Internet', desc:"No internet, slow connection, can't reach a server",
+    sub:[
+      {id:'down', title:"Can't get online", desc:'No internet at all on my machine'},
+      {id:'slow', title:'Slow internet', desc:'Pages take forever to load'},
+      {id:'wifi', title:'WiFi problems', desc:"Won't connect or keeps dropping"},
+      {id:'vpn', title:"VPN isn't working", desc:"Can't connect remotely or VPN error"},
+      {id:'shared', title:'Shared drives missing', desc:"Can't see network folders / mapped drives"},
+      {id:'other', title:'Something else', desc:'Network issue not listed above'}
+    ]},
+  {id:'phone', icon:'☎', title:'Phone / Voicemail', desc:'Desk phone, mobile phone, or voicemail issue',
+    sub:[
+      {id:'no-dial', title:"Can't make calls", desc:'No dial tone or calls fail'},
+      {id:'no-receive', title:'Not getting calls', desc:'Calls go straight to voicemail or never ring'},
+      {id:'voicemail', title:'Voicemail issue', desc:"Can't access or new messages not coming through"},
+      {id:'mobile', title:'Company mobile / iPhone', desc:'Issue with my work cell phone'},
+      {id:'other', title:'Something else', desc:'Phone issue not listed above'}
+    ]},
+  {id:'printer', icon:'⎙', title:'Printer / Scanner', desc:"Can't print, can't scan, or printer is offline",
+    sub:[
+      {id:'offline', title:'Printer is offline', desc:"Says offline / can't connect to it"},
+      {id:'jam', title:'Paper jam / hardware', desc:'Physical jam or mechanical issue'},
+      {id:'quality', title:'Print quality bad', desc:'Streaks, blank pages, faded'},
+      {id:'scan', title:'Scanning not working', desc:"Can't scan to email or computer"},
+      {id:'other', title:'Something else', desc:'Printer/scanner issue not listed above'}
+    ]},
+  {id:'access', icon:'⌧', title:'Access / Permissions', desc:'Need access to a system, folder, or new account',
+    sub:[
+      {id:'new-user', title:'New employee setup', desc:'Setting up a brand new team member'},
+      {id:'app-access', title:'Need access to an app', desc:'Need login/permission for a system'},
+      {id:'folder-access', title:'Need access to a folder', desc:"Can't open a shared folder I need"},
+      {id:'departure', title:'Departing employee', desc:'Someone leaving — need their access removed'},
+      {id:'other', title:'Something else', desc:'Access issue not listed above'}
+    ]},
+  {id:'other', icon:'?', title:'Something else', desc:"It's an IT issue but I'm not sure where it fits",
+    sub:[{id:'other', title:'Other / Not sure', desc:"I'll describe it in the next step"}]}
+];
+
+const URGENCY=[
+  {id:'P1', cls:'eu-urg-1', icon:'⛔', title:"Can't work at all", desc:"Production stopped — I can't do my job. SLA: 1 hour response."},
+  {id:'P2', cls:'eu-urg-2', icon:'⚠', title:'Slowing me down', desc:"I can work but it's painful. SLA: 4 hour response."},
+  {id:'P3', cls:'eu-urg-3', icon:'⏱', title:'Annoying but workable', desc:"Need it fixed but no rush. SLA: 24 hour response."},
+  {id:'P4', cls:'eu-urg-4', icon:'☆', title:'Just FYI / improvement', desc:"Just letting you know — fix when convenient. SLA: 3 days."}
+];
+
+let WIZ={step:1, category:null, sub:null, urgency:null, title:'', desc:'', attachment:null, name:'', email:'', dept:''};
+
+function setStep(n){
+  WIZ.step=n;
+  document.querySelectorAll('.eu-step').forEach(el=>{
+    const s=parseInt(el.dataset.step);
+    el.classList.remove('current','done');
+    if(s<n)el.classList.add('done');
+    if(s===n)el.classList.add('current');
+  });
+  document.getElementById('eu-hero').style.display=n===1?'':'none';
+  renderWizard();
+}
+
+function renderWizard(){
+  const mount=document.getElementById('eu-wiz');
+  switch(WIZ.step){
+    case 1: mount.innerHTML=renderStep1(); break;
+    case 2: mount.innerHTML=renderStep2(); break;
+    case 3: mount.innerHTML=renderStep3(); break;
+    case 4: mount.innerHTML=renderStep4(); attachStep4Listeners(); break;
+    case 5: mount.innerHTML=renderStep5(); attachStep5Listeners(); break;
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderStep1(){
+  return `
+    <div class="eu-question">
+      <span class="eu-question-eye">Step 1 of 5</span>
+      <h2 class="eu-question-title">What's broken?</h2>
+      <p class="eu-question-sub">Pick the closest match. Don't worry about getting it perfect — we'll narrow it down next.</p>
+    </div>
+    <div class="eu-tiles">
+      ${CATS.map(c=>`
+        <div class="eu-tile ${WIZ.category===c.id?'selected':''}" onclick="pickCategory('${c.id}')">
+          <span class="eu-tile-ic">${c.icon}</span>
+          <div class="eu-tile-title">${esc(c.title)}</div>
+          <div class="eu-tile-desc">${esc(c.desc)}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+function pickCategory(id){WIZ.category=id;WIZ.sub=null;setStep(2);}
+
+function renderStep2(){
+  const cat=CATS.find(c=>c.id===WIZ.category);
+  if(!cat){setStep(1);return'';}
+  return `
+    <div class="eu-question">
+      <span class="eu-question-eye">Step 2 of 5</span>
+      <h2 class="eu-question-title">More specifically...</h2>
+      <p class="eu-question-sub">Which of these best describes what's happening with your <strong style="color:var(--eu-ink);font-style:normal">${esc(cat.title.toLowerCase())}</strong>?</p>
+    </div>
+    <div class="eu-tiles compact">
+      ${cat.sub.map(s=>`
+        <div class="eu-tile ${WIZ.sub===s.id?'selected':''}" onclick="pickSub('${s.id}')">
+          <div class="eu-tile-title">${esc(s.title)}</div>
+          <div class="eu-tile-desc">${esc(s.desc)}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="eu-btn-row">
+      <button class="eu-btn eu-btn-link" onclick="setStep(1)">← Back</button>
+      <span></span>
+    </div>
+  `;
+}
+function pickSub(id){WIZ.sub=id;setStep(3);}
+
+function renderStep3(){
+  return `
+    <div class="eu-question">
+      <span class="eu-question-eye">Step 3 of 5</span>
+      <h2 class="eu-question-title">How urgent is this?</h2>
+      <p class="eu-question-sub">Be honest — this helps IT prioritize correctly. Not everything is critical, and tagging things accurately gets you faster real responses.</p>
+    </div>
+    <div class="eu-tiles">
+      ${URGENCY.map(u=>`
+        <div class="eu-tile ${u.cls} ${WIZ.urgency===u.id?'selected':''}" onclick="pickUrgency('${u.id}')">
+          <span class="eu-tile-ic">${u.icon}</span>
+          <div class="eu-tile-title">${esc(u.title)}</div>
+          <div class="eu-tile-desc">${esc(u.desc)}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="eu-btn-row">
+      <button class="eu-btn eu-btn-link" onclick="setStep(2)">← Back</button>
+      <span></span>
+    </div>
+  `;
+}
+function pickUrgency(id){WIZ.urgency=id;setStep(4);}
+
+function renderStep4(){
+  const cat=CATS.find(c=>c.id===WIZ.category);
+  const sub=cat?.sub.find(s=>s.id===WIZ.sub);
+  // Suggest a default title from the picks
+  if(!WIZ.title)WIZ.title=`${sub?.title||cat?.title||'IT issue'}`;
+  return `
+    <div class="eu-question">
+      <span class="eu-question-eye">Step 4 of 5</span>
+      <h2 class="eu-question-title">Tell us more</h2>
+      <p class="eu-question-sub">A short title and a few sentences about what's happening. The more specific, the faster we fix it.</p>
+    </div>
+    <div class="eu-form">
+      <div class="eu-form-row">
+        <label class="eu-label" for="eu-title">Short title <span class="req">*</span></label>
+        <input class="eu-input" id="eu-title" maxlength="120" placeholder="e.g. Outlook keeps closing on its own" value="${esc(WIZ.title)}">
+        <div class="eu-form-help">A one-line summary — like an email subject.</div>
+      </div>
+      <div class="eu-form-row">
+        <label class="eu-label" for="eu-desc">What's happening? <span class="req">*</span></label>
+        <textarea class="eu-textarea" id="eu-desc" placeholder="What were you doing when it broke? Any error messages? Has it happened before? When did it start?">${esc(WIZ.desc)}</textarea>
+        <div class="eu-form-help">No tech jargon needed. Pretend you're describing it to a coworker.</div>
+      </div>
+      <div class="eu-form-row">
+        <label class="eu-label">Screenshot or photo (optional)</label>
+        <div class="eu-file" id="eu-file-drop">
+          <input type="file" id="eu-file" accept="image/*">
+          <div class="eu-file-text"><strong>Click to attach</strong> or drag a file here</div>
+          <div class="eu-file-hint">Helps a lot if you can show us the error message · max 5MB</div>
+        </div>
+        <div id="eu-file-status"></div>
+      </div>
+    </div>
+    <div class="eu-btn-row">
+      <button class="eu-btn eu-btn-link" onclick="setStep(3)">← Back</button>
+      <button class="eu-btn eu-btn-primary" onclick="goStep5()">Next →</button>
+    </div>
+  `;
+}
+function attachStep4Listeners(){
+  const titleEl=document.getElementById('eu-title');
+  const descEl=document.getElementById('eu-desc');
+  if(titleEl)titleEl.oninput=e=>{WIZ.title=e.target.value;};
+  if(descEl)descEl.oninput=e=>{WIZ.desc=e.target.value;};
+  const fileEl=document.getElementById('eu-file');
+  if(fileEl)fileEl.onchange=e=>{
+    const f=e.target.files[0];
+    if(!f)return;
+    if(f.size>5*1024*1024){alert('That file is over 5MB. Please attach something smaller, or skip the attachment.');e.target.value='';return;}
+    const r=new FileReader();
+    r.onload=ev=>{
+      WIZ.attachment={name:f.name, type:f.type, size:f.size, data:ev.target.result};
+      document.getElementById('eu-file-status').innerHTML=`<div class="eu-file-attached">📎 <strong>${esc(f.name)}</strong> attached (${Math.round(f.size/1024)}KB) · <a onclick="removeAttachment()" style="color:var(--green);text-decoration:underline;cursor:pointer">remove</a></div>`;
+    };
+    r.readAsDataURL(f);
+  };
+  if(WIZ.attachment){
+    document.getElementById('eu-file-status').innerHTML=`<div class="eu-file-attached">📎 <strong>${esc(WIZ.attachment.name)}</strong> attached (${Math.round(WIZ.attachment.size/1024)}KB) · <a onclick="removeAttachment()" style="color:var(--green);text-decoration:underline;cursor:pointer">remove</a></div>`;
+  }
+}
+function removeAttachment(){WIZ.attachment=null;document.getElementById('eu-file-status').innerHTML='';document.getElementById('eu-file').value='';}
+function goStep5(){
+  if(!WIZ.title.trim())return alert('Please add a short title.');
+  if(!WIZ.desc.trim())return alert("Please describe what's happening — even one sentence helps.");
+  setStep(5);
+}
+
+function renderStep5(){
+  // Pre-fill from previous submission if remembered
+  const remembered=JSON.parse(localStorage.getItem('advHelpdeskMe')||'{}');
+  if(!WIZ.name)WIZ.name=remembered.name||'';
+  if(!WIZ.email)WIZ.email=remembered.email||'';
+  if(!WIZ.dept)WIZ.dept=remembered.dept||'';
+  return `
+    <div class="eu-question">
+      <span class="eu-question-eye">Step 5 of 5</span>
+      <h2 class="eu-question-title">Who are you?</h2>
+      <p class="eu-question-sub">So IT can get back to you. We'll remember this on your next visit.</p>
+    </div>
+    <div class="eu-form">
+      <div class="eu-form-row">
+        <label class="eu-label" for="eu-name">Your name <span class="req">*</span></label>
+        <input class="eu-input" id="eu-name" placeholder="First and last name" value="${esc(WIZ.name)}">
+      </div>
+      <div class="eu-form-grid">
+        <div>
+          <label class="eu-label" for="eu-email">Email <span class="req">*</span></label>
+          <input class="eu-input" id="eu-email" type="email" placeholder="you@advcosinc.com" value="${esc(WIZ.email)}">
+        </div>
+        <div>
+          <label class="eu-label" for="eu-dept">Department</label>
+          <select class="eu-select" id="eu-dept">
+            <option value="">Choose…</option>
+            ${['Engineering','Production / Manufacturing','Quality','Shipping & Receiving','Procurement','Accounting','Sales','Office Admin','Management','Other'].map(d=>`<option ${WIZ.dept===d?'selected':''}>${d}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="eu-reassure"><span class="eu-reassure-ic">✓</span><div><strong>Your ticket is going to:</strong> Wesley, IT Manager. You'll get an email confirmation right after submitting. Most tickets are acknowledged within the SLA window for the urgency you picked.</div></div>
+    <div class="eu-btn-row">
+      <button class="eu-btn eu-btn-link" onclick="setStep(4)">← Back</button>
+      <button class="eu-btn eu-btn-primary" onclick="submitTicket()">Submit Ticket →</button>
+    </div>
+  `;
+}
+function attachStep5Listeners(){
+  const nameEl=document.getElementById('eu-name');
+  const emailEl=document.getElementById('eu-email');
+  const deptEl=document.getElementById('eu-dept');
+  if(nameEl)nameEl.oninput=e=>{WIZ.name=e.target.value;};
+  if(emailEl)emailEl.oninput=e=>{WIZ.email=e.target.value;};
+  if(deptEl)deptEl.onchange=e=>{WIZ.dept=e.target.value;};
+}
+
+function submitTicket(){
+  if(!WIZ.name.trim())return alert('Please enter your name.');
+  if(!WIZ.email.trim()||!/.+@.+\..+/.test(WIZ.email))return alert('Please enter a valid email address.');
+  const cat=CATS.find(c=>c.id===WIZ.category);
+  const sub=cat?.sub.find(s=>s.id===WIZ.sub);
+  const t={
+    id:DB.nextId++,
+    title:WIZ.title.trim(),
+    description:WIZ.desc.trim(),
+    category:cat?.title||'Other',
+    subCategory:sub?.title||'',
+    priority:WIZ.urgency||'P3',
+    status:'new',
+    requesterName:WIZ.name.trim(),
+    requesterEmail:WIZ.email.trim(),
+    requesterDept:WIZ.dept||'',
+    createdAt:nowISO(),
+    updatedAt:nowISO(),
+    timeline:[
+      {t:nowISO(), kind:'system', author:'System', body:`Ticket created via portal. Category: ${cat?.title}${sub?` → ${sub.title}`:''}`}
+    ],
+    attachment:WIZ.attachment||null,
+    assignee:'IT Manager',
+    resolution:''
+  };
+  DB.tickets.unshift(t);
+  saveDB();
+  // Remember the user
+  localStorage.setItem('advHelpdeskMe', JSON.stringify({name:WIZ.name, email:WIZ.email, dept:WIZ.dept}));
+  // Track which tickets belong to me
+  const mineList=JSON.parse(localStorage.getItem('advHelpdeskMine')||'[]');
+  mineList.unshift(t.id);
+  localStorage.setItem('advHelpdeskMine', JSON.stringify(mineList));
+
+  // Show success
+  const slaHrs=DB.settings.sla[t.priority];
+  const ticket=t;
+  document.getElementById('eu-success').innerHTML=`
+    <div class="eu-success">
+      <div class="eu-success-mark">✓</div>
+      <h1 class="eu-success-title">We've got it.</h1>
+      <div class="eu-success-id">TICKET #${ticket.id}</div>
+      <p class="eu-success-msg">Thanks ${esc(ticket.requesterName.split(' ')[0])}. IT has been notified and will respond within <strong style="color:var(--crimson);font-style:normal">${slaHrs} hour${slaHrs===1?'':'s'}</strong> for your urgency level.</p>
+      <div class="eu-success-meta">
+        <div class="eu-success-meta-row"><div class="eu-success-meta-lbl">What you reported</div><div class="eu-success-meta-val">${esc(ticket.title)}</div></div>
+        <div class="eu-success-meta-row"><div class="eu-success-meta-lbl">Category</div><div class="eu-success-meta-val">${esc(ticket.category)}${ticket.subCategory?' / '+esc(ticket.subCategory):''}</div></div>
+        <div class="eu-success-meta-row"><div class="eu-success-meta-lbl">Priority</div><div class="eu-success-meta-val">${ticket.priority} — ${esc(URGENCY.find(u=>u.id===ticket.priority)?.title||'')}</div></div>
+        <div class="eu-success-meta-row"><div class="eu-success-meta-lbl">Submitted</div><div class="eu-success-meta-val">${fmtDateTime(ticket.createdAt)}</div></div>
+      </div>
+      <div class="eu-btn-row center" style="margin-top:0">
+        <button class="eu-btn eu-btn-ghost" onclick="goEU('mine')">View My Tickets</button>
+        <button class="eu-btn eu-btn-primary" onclick="resetWizardAndGoHome()">Submit Another</button>
+      </div>
+    </div>
+  `;
+  goEU('success');
+}
+function resetWizardAndGoHome(){
+  WIZ={step:1, category:null, sub:null, urgency:null, title:'', desc:'', attachment:null, name:WIZ.name, email:WIZ.email, dept:WIZ.dept};
+  goEU('home');
+  setStep(1);
+}
+
+// ─── End-user navigation ───
+function goEU(page){
+  document.querySelectorAll('.eu-page').forEach(p=>p.classList.add('hidden'));
+  document.getElementById('eu-page-'+page)?.classList.remove('hidden');
+  document.getElementById('ad-app').classList.add('hidden');
+  document.getElementById('eu-app').classList.remove('hidden');
+  document.body.classList.remove('admin-mode');
+  if(page==='mine')renderMine();
+}
+
+function renderMine(){
+  const mineIds=JSON.parse(localStorage.getItem('advHelpdeskMine')||'[]');
+  const mine=DB.tickets.filter(t=>mineIds.includes(t.id));
+  const list=document.getElementById('eu-mine-list');
+  if(!mine.length){
+    list.innerHTML=`
+      <div class="eu-empty">
+        <div class="eu-empty-ic">⌽</div>
+        <div class="eu-empty-title">No tickets yet</div>
+        <div class="eu-empty-sub">When you submit a ticket, it'll show up here so you can track its status.</div>
+      </div>`;
+    return;
+  }
+  list.innerHTML=`<div class="eu-tickets-list">${mine.map(t=>`
+    <div class="eu-ticket-card s-${t.status}" onclick="viewMyTicket(${t.id})">
+      <div class="eu-ticket-id">#${t.id}</div>
+      <div class="eu-ticket-body">
+        <div class="eu-ticket-title">${esc(t.title)}</div>
+        <div class="eu-ticket-meta">
+          <span>${esc(t.category)}</span>
+          <span>·</span>
+          <span>Submitted ${fmtRelative(t.createdAt)}</span>
+          ${t.timeline.length>1?`<span>·</span><span>${t.timeline.length-1} update${t.timeline.length===2?'':'s'}</span>`:''}
+        </div>
+      </div>
+      <span class="eu-ticket-status eu-status-${t.status}">${statusLabel(t.status)}</span>
+    </div>
+  `).join('')}</div>`;
+}
+function statusLabel(s){return ({new:'New', progress:'In Progress', waiting:'Waiting on You', resolved:'Resolved'})[s]||s;}
+
+function viewMyTicket(id){
+  const t=DB.tickets.find(x=>x.id===id);
+  if(!t){alert('Ticket not found.');return;}
+  // Render the end-user-friendly detail view
+  const visibleEvents=t.timeline.filter(e=>e.kind!=='note'); // hide internal notes from user
+  document.getElementById('eu-detail').innerHTML=`
+    <div style="margin-bottom:18px">
+      <button class="eu-btn eu-btn-link" onclick="goEU('mine')">← Back to My Tickets</button>
+    </div>
+    <div class="eu-form" style="padding:32px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+        <span class="eu-success-id" style="margin:0">TICKET #${t.id}</span>
+        <span class="eu-ticket-status eu-status-${t.status}">${statusLabel(t.status)}</span>
+        <span class="muted" style="font-family:var(--mono);font-size:11px;letter-spacing:.5px">SUBMITTED ${fmtRelative(t.createdAt)}</span>
+      </div>
+      <h2 class="eu-question-title" style="font-size:28px;text-align:left;margin-bottom:6px">${esc(t.title)}</h2>
+      <div class="muted" style="font-size:13px;margin-bottom:18px">${esc(t.category)}${t.subCategory?' / '+esc(t.subCategory):''} · Priority ${t.priority}</div>
+
+      <div style="margin-bottom:24px">
+        <div class="eu-label">Original Description</div>
+        <div style="padding:14px 16px;background:var(--eu-paper-2);border-radius:3px;border-left:3px solid var(--eu-line-2);font-size:14px;color:var(--eu-ink-2);line-height:1.6;white-space:pre-wrap">${esc(t.description)}</div>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <div class="eu-label">Activity</div>
+        ${visibleEvents.map(e=>`
+          <div style="display:grid;grid-template-columns:24px 1fr;gap:12px;margin-bottom:14px">
+            <div style="width:24px;height:24px;border-radius:50%;background:${e.kind==='reply'?'var(--crimson)':'var(--eu-line-2)'};color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:700">${e.kind==='reply'?'IT':'•'}</div>
+            <div style="background:${e.kind==='reply'?'var(--crimson-soft)':'var(--eu-paper-2)'};padding:10px 14px;border-radius:3px;border-left:2px solid ${e.kind==='reply'?'var(--crimson)':'var(--eu-line-2)'}">
+              <div style="font-family:var(--mono);font-size:10.5px;color:var(--eu-ink-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px"><strong style="color:var(--eu-ink)">${esc(e.author||'IT')}</strong> · ${fmtRelative(e.t)}</div>
+              <div style="font-size:13.5px;color:var(--eu-ink-2);line-height:1.55;white-space:pre-wrap">${esc(e.body)}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      ${t.status!=='resolved'?`
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--eu-line)">
+        <div class="eu-label">Add a reply</div>
+        <textarea class="eu-textarea" id="eu-mine-reply" placeholder="Anything to add? More details, an update, or a question for IT..."></textarea>
+        <div class="eu-btn-row" style="margin-top:14px">
+          <span></span>
+          <button class="eu-btn eu-btn-primary" onclick="submitUserReply(${t.id})">Send Reply</button>
+        </div>
+      </div>`:`
+      <div class="eu-reassure" style="margin-top:18px"><span class="eu-reassure-ic">✓</span><div>This ticket has been resolved. If the issue is still happening, please <a onclick="goEU('home')">submit a new ticket</a>.</div></div>`}
+    </div>
+  `;
+  goEU('detail');
+}
+
+function submitUserReply(id){
+  const txt=document.getElementById('eu-mine-reply').value.trim();
+  if(!txt)return alert('Type a reply first.');
+  const t=DB.tickets.find(x=>x.id===id);
+  if(!t)return;
+  t.timeline.push({t:nowISO(), kind:'reply', author:t.requesterName||'You', body:txt, fromUser:true});
+  // If it was 'waiting on user' → bump back to 'in progress'
+  if(t.status==='waiting')t.status='progress';
+  t.updatedAt=nowISO();
+  saveDB();
+  viewMyTicket(id);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN LOGIN
+// ═══════════════════════════════════════════════════════════════
+
+function openAdminLogin(){
+  // Already logged in? Skip
+  if(sessionStorage.getItem(ADMIN_PW_KEY)==='ok'){enterAdmin();return;}
+  document.getElementById('ad-login-bg').classList.add('open');
+  document.getElementById('ad-login-pw').value='';
+  document.getElementById('ad-login-err').classList.remove('show');
+  setTimeout(()=>document.getElementById('ad-login-pw').focus(),100);
+}
+function closeAdminLogin(){document.getElementById('ad-login-bg').classList.remove('open');}
+function doAdminLogin(){
+  const v=document.getElementById('ad-login-pw').value;
+  if(v===DB.settings.adminPassword){
+    sessionStorage.setItem(ADMIN_PW_KEY,'ok');
+    closeAdminLogin();
+    enterAdmin();
+  }else{
+    document.getElementById('ad-login-err').classList.add('show');
+  }
+}
+function enterAdmin(){
+  document.getElementById('eu-app').classList.add('hidden');
+  document.getElementById('ad-app').classList.remove('hidden');
+  document.body.classList.add('admin-mode');
+  goAD('triage');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN VIEWS
+// ═══════════════════════════════════════════════════════════════
+
+let CURRENT_ADMIN_VIEW='triage';
+
+function goAD(view){
+  CURRENT_ADMIN_VIEW=view;
+  document.querySelectorAll('.ad-side-item').forEach(i=>i.classList.toggle('active', i.dataset.view===view));
+  renderAdmin();
+}
+
+function renderAdmin(){
+  updateTopPills();
+  updateSideCounts();
+  const main=document.getElementById('ad-main');
+  switch(CURRENT_ADMIN_VIEW){
+    case 'triage': main.innerHTML=renderTriage(); attachKanbanDnD(); break;
+    case 'today': main.innerHTML=renderToday(); break;
+    case 'all': main.innerHTML=renderAllTickets(); break;
+    case 'p1': main.innerHTML=renderListView(t=>t.priority==='P1'&&t.status!=='resolved','P1 Critical Tickets','All open P1 — these have a 1-hour SLA window'); break;
+    case 'aging': main.innerHTML=renderListView(t=>t.status!=='resolved'&&(Date.now()-new Date(t.createdAt).getTime())>3*86400000,'Aging Tickets · &gt; 3 Days','Open tickets that have been sitting for 3+ days'); break;
+    case 'resolved': main.innerHTML=renderListView(t=>t.status==='resolved'&&(Date.now()-new Date(t.updatedAt).getTime())<30*86400000,'Recently Resolved','Tickets resolved in the past 30 days'); break;
+    case 'analytics': main.innerHTML=renderAnalytics(); break;
+    case 'settings': main.innerHTML=renderSettings(); break;
+  }
+}
+
+function updateTopPills(){
+  const open=DB.tickets.filter(t=>t.status!=='resolved').length;
+  let risk=0,breach=0;
+  DB.tickets.forEach(t=>{const s=slaInfo(t);if(s.state==='risk')risk++;else if(s.state==='breach')breach++;});
+  document.getElementById('ad-pill-open-n').textContent=open;
+  document.getElementById('ad-pill-risk-n').textContent=risk;
+  document.getElementById('ad-pill-breach-n').textContent=breach;
+}
+function updateSideCounts(){
+  const all=DB.tickets.length;
+  const today=DB.tickets.filter(t=>{
+    if(t.status==='resolved')return false;
+    const s=slaInfo(t);
+    if(s.state==='breach'||s.state==='risk')return true;
+    const isNew=t.timeline.length===1;
+    if(isNew)return true;
+    return false;
+  }).length;
+  const p1=DB.tickets.filter(t=>t.priority==='P1'&&t.status!=='resolved').length;
+  const aging=DB.tickets.filter(t=>t.status!=='resolved'&&(Date.now()-new Date(t.createdAt).getTime())>3*86400000).length;
+  const resolved=DB.tickets.filter(t=>t.status==='resolved'&&(Date.now()-new Date(t.updatedAt).getTime())<30*86400000).length;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('ad-cnt-today',today);set('ad-cnt-all',all);set('ad-cnt-p1',p1);set('ad-cnt-aging',aging);set('ad-cnt-resolved',resolved);
+}
+
+// ─── TRIAGE BOARD (kanban) ───
+function renderTriage(){
+  const q=(document.getElementById('ad-search')?.value||'').toLowerCase();
+  const cols=[
+    {id:'new', label:'NEW · Triage'},
+    {id:'progress', label:'IN PROGRESS'},
+    {id:'waiting', label:'WAITING ON USER'},
+    {id:'resolved', label:'RESOLVED'}
+  ];
+  const filtered=DB.tickets.filter(t=>!q||matchTicket(t,q));
+  const grouped={};
+  cols.forEach(c=>grouped[c.id]=filtered.filter(t=>t.status===c.id));
+  // Sort: by priority then by SLA breach risk
+  const PR={P1:1,P2:2,P3:3,P4:4};
+  Object.keys(grouped).forEach(k=>grouped[k].sort((a,b)=>(PR[a.priority]-PR[b.priority])||(slaInfo(b).percent-slaInfo(a).percent)));
+  return `
+    <div class="ad-ph">
+      <div>
+        <div class="ad-ph-eye">⊞ Workflow · Live</div>
+        <div class="ad-ph-title">Triage Board</div>
+        <div class="ad-ph-sub">Drag-and-drop tickets between columns to change status. Sorted by priority, then SLA risk. Click a card to open the full detail.</div>
+      </div>
+      <div class="ad-ph-actions">
+        <button class="ad-btn ad-btn-sm" onclick="goAD('all')">≡ List View</button>
+        <button class="ad-btn ad-btn-primary ad-btn-sm" onclick="newTicketAdmin()">+ New Ticket</button>
+      </div>
+    </div>
+    <div class="ad-kpis">
+      <div class="ad-kpi blue"><div class="ad-kpi-l">New</div><div class="ad-kpi-v">${grouped.new.length}</div><div class="ad-kpi-s">awaiting triage</div></div>
+      <div class="ad-kpi amber"><div class="ad-kpi-l">In Progress</div><div class="ad-kpi-v">${grouped.progress.length}</div><div class="ad-kpi-s">being worked</div></div>
+      <div class="ad-kpi purple"><div class="ad-kpi-l">Waiting on User</div><div class="ad-kpi-v">${grouped.waiting.length}</div><div class="ad-kpi-s">need user response</div></div>
+      <div class="ad-kpi green"><div class="ad-kpi-l">Resolved (30d)</div><div class="ad-kpi-v">${DB.tickets.filter(t=>t.status==='resolved'&&(Date.now()-new Date(t.updatedAt).getTime())<30*86400000).length}</div><div class="ad-kpi-s">closed out</div></div>
+    </div>
+    <div class="ad-kanban">
+      ${cols.map(c=>`
+        <div class="ad-col" data-status="${c.id}">
+          <div class="ad-col-hd">
+            <div class="ad-col-name">${c.label}</div>
+            <div class="ad-col-cnt">${grouped[c.id].length}</div>
+          </div>
+          <div class="ad-col-body">
+            ${grouped[c.id].length?grouped[c.id].map(t=>cardHTML(t)).join(''):`<div class="ad-empty" style="margin:10px;padding:24px 12px"><div class="ad-empty-ic">⌽</div><div class="ad-empty-title">Empty</div><div style="font-size:11px">No tickets here</div></div>`}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function cardHTML(t){
+  const sla=slaInfo(t);
+  return `
+    <div class="ad-card ${t.priority.toLowerCase()}" draggable="true" data-id="${t.id}" onclick="openDrawer(${t.id})">
+      <div class="ad-card-hd">
+        <span class="ad-card-id">#${t.id}</span>
+        <span class="ad-card-pri ${t.priority.toLowerCase()}">${t.priority}</span>
+        <span class="ad-card-cat">${esc(t.category.split(' ')[0])}</span>
+        ${t.status!=='resolved'?`<span class="ad-card-sla ${sla.state}">${sla.label}</span>`:''}
+      </div>
+      <div class="ad-card-title">${esc(t.title)}</div>
+      <div class="ad-card-foot">
+        <div class="ad-card-req">
+          <div class="ad-card-avatar">${esc(initials(t.requesterName))}</div>
+          <span class="ad-card-req-name">${esc(t.requesterName)}</span>
+        </div>
+        <span class="ad-card-time">${fmtRelative(t.createdAt)}</span>
+      </div>
+    </div>
+  `;
+}
+
+function attachKanbanDnD(){
+  document.querySelectorAll('.ad-card').forEach(card=>{
+    card.addEventListener('dragstart',e=>{
+      e.dataTransfer.setData('text/plain', card.dataset.id);
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend',()=>card.classList.remove('dragging'));
+  });
+  document.querySelectorAll('.ad-col').forEach(col=>{
+    col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('drag-over');});
+    col.addEventListener('dragleave',()=>col.classList.remove('drag-over'));
+    col.addEventListener('drop',e=>{
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      const id=parseInt(e.dataTransfer.getData('text/plain'));
+      const newStatus=col.dataset.status;
+      const t=DB.tickets.find(x=>x.id===id);
+      if(!t||t.status===newStatus)return;
+      const oldStatus=t.status;
+      t.status=newStatus;
+      t.updatedAt=nowISO();
+      t.timeline.push({t:nowISO(), kind:'system', author:'IT Manager', body:`Status changed: ${oldStatus} → ${newStatus}`});
+      saveDB();
+      renderAdmin();
+      toast(`Moved #${id} to ${newStatus}`);
+    });
+  });
+}
+
+// ─── TODAY VIEW ───
+function renderToday(){
+  const need=DB.tickets.filter(t=>{
+    if(t.status==='resolved')return false;
+    const s=slaInfo(t);
+    if(s.state==='breach'||s.state==='risk')return true;
+    if(t.timeline.length===1)return true; // never touched
+    return false;
+  });
+  const PR={P1:1,P2:2,P3:3,P4:4};
+  need.sort((a,b)=>{
+    const sa=slaInfo(a), sb=slaInfo(b);
+    const stOrd={breach:1,risk:2,ok:3};
+    return (stOrd[sa.state]-stOrd[sb.state])||(PR[a.priority]-PR[b.priority]);
+  });
+  return `
+    <div class="ad-ph">
+      <div>
+        <div class="ad-ph-eye">★ Priority Queue · Today</div>
+        <div class="ad-ph-title">What Needs Attention Now</div>
+        <div class="ad-ph-sub">SLA breached, at risk, or never touched. Sorted hottest-first. Stay here through the morning, then graduate to Triage Board.</div>
+      </div>
+      <div class="ad-ph-actions">
+        <button class="ad-btn ad-btn-sm" onclick="goAD('triage')">⊞ Board</button>
+      </div>
+    </div>
+    ${need.length?`
+      <div class="ad-tbl-wrap">
+        <table class="ad-tbl">
+          <thead><tr><th>#</th><th>Pri</th><th>Title</th><th>Requester</th><th>Category</th><th>Status</th><th>Age</th><th>SLA</th></tr></thead>
+          <tbody>
+          ${need.map(t=>{const s=slaInfo(t);return `
+            <tr onclick="openDrawer(${t.id})">
+              <td class="ad-tbl-mono">#${t.id}</td>
+              <td><span class="ad-card-pri ${t.priority.toLowerCase()}">${t.priority}</span></td>
+              <td class="ad-tbl-fw">${esc(t.title)}</td>
+              <td>${esc(t.requesterName)}</td>
+              <td class="ad-tbl-mono">${esc(t.category)}</td>
+              <td class="ad-tbl-mono">${t.status.toUpperCase()}</td>
+              <td class="ad-tbl-mono">${fmtRelative(t.createdAt)}</td>
+              <td><span class="sla-${s.state}">${s.label}</span></td>
+            </tr>`;}).join('')}
+          </tbody>
+        </table>
+      </div>`:`<div class="ad-empty"><div class="ad-empty-ic">✓</div><div class="ad-empty-title">All clear</div><div style="font-size:12px;margin-top:4px">Nothing requires immediate attention. Move to the Triage Board.</div></div>`}
+  `;
+}
+
+// ─── ALL TICKETS LIST ───
+function renderAllTickets(){
+  return renderListView(()=>true, 'All Tickets', `Complete register — ${DB.tickets.length} ticket${DB.tickets.length===1?'':'s'}`, true);
+}
+
+function renderListView(filterFn, title, sub, showFilters){
+  const q=(document.getElementById('ad-search')?.value||'').toLowerCase();
+  let items=DB.tickets.filter(filterFn);
+  if(q)items=items.filter(t=>matchTicket(t,q));
+  return `
+    <div class="ad-ph">
+      <div>
+        <div class="ad-ph-eye">≡ Register · Filter</div>
+        <div class="ad-ph-title">${title}</div>
+        <div class="ad-ph-sub">${sub}</div>
+      </div>
+      <div class="ad-ph-actions">
+        <button class="ad-btn ad-btn-sm" onclick="goAD('triage')">⊞ Board</button>
+      </div>
+    </div>
+    <div class="ad-tbl-wrap">
+      <table class="ad-tbl">
+        <thead><tr><th>#</th><th>Pri</th><th>Status</th><th>Title</th><th>Requester</th><th>Dept</th><th>Category</th><th>Created</th><th>SLA</th></tr></thead>
+        <tbody>
+        ${items.length?items.map(t=>{const s=slaInfo(t);return `
+          <tr onclick="openDrawer(${t.id})">
+            <td class="ad-tbl-mono">#${t.id}</td>
+            <td><span class="ad-card-pri ${t.priority.toLowerCase()}">${t.priority}</span></td>
+            <td class="ad-tbl-mono">${t.status.toUpperCase()}</td>
+            <td class="ad-tbl-fw">${esc(t.title)}</td>
+            <td>${esc(t.requesterName)}</td>
+            <td class="ad-tbl-mono">${esc(t.requesterDept||'—')}</td>
+            <td class="ad-tbl-mono">${esc(t.category)}</td>
+            <td class="ad-tbl-mono">${fmtRelative(t.createdAt)}</td>
+            <td>${t.status==='resolved'?'<span class="sla-ok">CLOSED</span>':`<span class="sla-${s.state}">${s.label}</span>`}</td>
+          </tr>`;}).join(''):`<tr><td colspan="9"><div class="ad-empty"><div class="ad-empty-ic">⌽</div><div class="ad-empty-title">No tickets match</div></div></td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+function matchTicket(t,q){
+  return [t.title,t.description,t.category,t.requesterName,t.requesterEmail,t.requesterDept,'#'+t.id, t.timeline.map(e=>e.body).join(' ')].join(' ').toLowerCase().includes(q);
+}
+
+// ─── ANALYTICS ───
+function renderAnalytics(){
+  const all=DB.tickets;
+  const open=all.filter(t=>t.status!=='resolved').length;
+  const resolved=all.filter(t=>t.status==='resolved').length;
+  const rate=all.length?Math.round(resolved/all.length*100):0;
+  // Avg time to first response
+  const responseTimes=all.map(t=>{
+    const first=t.timeline.find(e=>e.kind==='reply'&&!e.fromUser);
+    if(!first)return null;
+    return (new Date(first.t).getTime()-new Date(t.createdAt).getTime())/3600000;
+  }).filter(x=>x!=null);
+  const avgFirstResponse=responseTimes.length?(responseTimes.reduce((a,b)=>a+b,0)/responseTimes.length).toFixed(1):'—';
+  // Avg time to resolve
+  const resolveTimes=all.filter(t=>t.status==='resolved').map(t=>(new Date(t.updatedAt).getTime()-new Date(t.createdAt).getTime())/3600000);
+  const avgResolve=resolveTimes.length?(resolveTimes.reduce((a,b)=>a+b,0)/resolveTimes.length).toFixed(1):'—';
+  // By priority
+  const byPri=['P1','P2','P3','P4'].map(p=>({p, n:all.filter(t=>t.priority===p).length, open:all.filter(t=>t.priority===p&&t.status!=='resolved').length}));
+  // By category
+  const cats=[...new Set(all.map(t=>t.category))];
+  const byCat=cats.map(c=>({c, n:all.filter(t=>t.category===c).length, open:all.filter(t=>t.category===c&&t.status!=='resolved').length})).sort((a,b)=>b.n-a.n);
+  return `
+    <div class="ad-ph">
+      <div>
+        <div class="ad-ph-eye">▦ Output · Performance</div>
+        <div class="ad-ph-title">Analytics</div>
+        <div class="ad-ph-sub">SLA performance, response and resolution metrics, distribution by category and priority.</div>
+      </div>
+      <div class="ad-ph-actions"><button class="ad-btn ad-btn-sm" onclick="exportAdmin('csv')">⬇ CSV</button></div>
+    </div>
+    <div class="ad-kpis">
+      <div class="ad-kpi crimson"><div class="ad-kpi-l">Total Tickets</div><div class="ad-kpi-v">${all.length}</div><div class="ad-kpi-s">all-time</div></div>
+      <div class="ad-kpi blue"><div class="ad-kpi-l">Open</div><div class="ad-kpi-v">${open}</div><div class="ad-kpi-s">awaiting action</div></div>
+      <div class="ad-kpi green"><div class="ad-kpi-l">Resolution Rate</div><div class="ad-kpi-v">${rate}%</div><div class="ad-kpi-s">${resolved} resolved</div></div>
+      <div class="ad-kpi amber"><div class="ad-kpi-l">First Response</div><div class="ad-kpi-v">${avgFirstResponse}<span style="font-size:14px;font-weight:600;color:var(--ad-text-3);margin-left:3px">hr</span></div><div class="ad-kpi-s">average</div></div>
+      <div class="ad-kpi purple"><div class="ad-kpi-l">Time to Resolve</div><div class="ad-kpi-v">${avgResolve}<span style="font-size:14px;font-weight:600;color:var(--ad-text-3);margin-left:3px">hr</span></div><div class="ad-kpi-s">average</div></div>
+    </div>
+    <div class="ad-section" style="margin-top:18px">
+      <div class="ad-section-hd">By Priority</div>
+      <div class="ad-tbl-wrap">
+        <table class="ad-tbl"><thead><tr><th>Priority</th><th style="text-align:right">Total</th><th style="text-align:right">Open</th><th style="text-align:right">Resolved</th><th style="text-align:right">SLA Target</th></tr></thead>
+          <tbody>${byPri.map(r=>`<tr><td><span class="ad-card-pri ${r.p.toLowerCase()}">${r.p}</span></td><td style="text-align:right" class="ad-tbl-mono">${r.n}</td><td style="text-align:right" class="ad-tbl-mono">${r.open}</td><td style="text-align:right" class="ad-tbl-mono">${r.n-r.open}</td><td style="text-align:right" class="ad-tbl-mono">${DB.settings.sla[r.p]} hr</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="ad-section">
+      <div class="ad-section-hd">By Category</div>
+      <div class="ad-tbl-wrap">
+        <table class="ad-tbl"><thead><tr><th>Category</th><th style="text-align:right">Total</th><th style="text-align:right">Open</th><th style="text-align:right">% of Total</th></tr></thead>
+          <tbody>${byCat.length?byCat.map(r=>`<tr><td class="ad-tbl-fw">${esc(r.c)}</td><td style="text-align:right" class="ad-tbl-mono">${r.n}</td><td style="text-align:right" class="ad-tbl-mono">${r.open}</td><td style="text-align:right" class="ad-tbl-mono">${all.length?Math.round(r.n/all.length*100):0}%</td></tr>`).join(''):'<tr><td colspan="4"><div class="ad-empty"><div class="ad-empty-title">No data yet</div></div></td></tr>'}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ─── SETTINGS ───
+function renderSettings(){
+  return `
+    <div class="ad-ph">
+      <div>
+        <div class="ad-ph-eye">⚙ Configuration</div>
+        <div class="ad-ph-title">Settings</div>
+        <div class="ad-ph-sub">Configure SLA windows, admin password, canned responses, and data export.</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="background:var(--ad-surface);border:1px solid var(--ad-border);border-radius:3px;padding:18px;border-left:3px solid var(--crimson)">
+        <div class="ad-section-hd" style="margin-top:0">SLA Windows · Hours</div>
+        ${['P1','P2','P3','P4'].map(p=>`
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span class="ad-card-pri ${p.toLowerCase()}" style="min-width:30px;text-align:center">${p}</span>
+            <input type="number" min="1" max="999" value="${DB.settings.sla[p]}" id="set-sla-${p}" style="width:100px;background:var(--ad-surface-2);border:1px solid var(--ad-border-2);color:var(--ad-text);padding:6px 10px;font-family:var(--mono);font-size:12px;border-radius:3px;outline:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--ad-text-3);letter-spacing:1px;text-transform:uppercase">hours</span>
+          </div>
+        `).join('')}
+        <button class="ad-btn ad-btn-primary ad-btn-sm" onclick="saveSLA()" style="margin-top:8px">Save SLA</button>
+      </div>
+      <div style="background:var(--ad-surface);border:1px solid var(--ad-border);border-radius:3px;padding:18px;border-left:3px solid var(--amber)">
+        <div class="ad-section-hd" style="margin-top:0">Admin Password</div>
+        <p style="font-size:12px;color:var(--ad-text-3);line-height:1.5;margin-bottom:12px">Currently: <span class="ad-tbl-mono" style="color:var(--crimson)">${esc(DB.settings.adminPassword)}</span></p>
+        <input type="text" id="set-pw" placeholder="New password" style="width:100%;background:var(--ad-surface-2);border:1px solid var(--ad-border-2);color:var(--ad-text);padding:7px 10px;font-family:var(--mono);font-size:12px;border-radius:3px;outline:none;margin-bottom:10px">
+        <button class="ad-btn ad-btn-primary ad-btn-sm" onclick="savePassword()">Update Password</button>
+      </div>
+    </div>
+    <div style="background:var(--ad-surface);border:1px solid var(--ad-border);border-radius:3px;padding:18px;margin-top:14px;border-left:3px solid var(--blue)">
+      <div class="ad-section-hd" style="margin-top:0">Canned Responses</div>
+      <p style="font-size:12px;color:var(--ad-text-3);line-height:1.5;margin-bottom:14px">Quick-reply buttons in the ticket detail. Edit by clicking, delete with the × button. Add new with the button below.</p>
+      <div id="canned-list">
+        ${(DB.settings.cannedResponses||[]).map((c,i)=>`
+          <div style="background:var(--ad-surface-2);border:1px solid var(--ad-border-2);border-radius:3px;padding:11px 14px;margin-bottom:8px;border-left:2px solid var(--ad-border-3)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <input type="text" value="${esc(c.label)}" id="canned-label-${i}" style="font-family:var(--cond);font-size:13px;font-weight:700;background:transparent;border:none;color:var(--ad-text);outline:none;flex:1;text-transform:uppercase;letter-spacing:.5px;padding:0">
+              <button class="ad-btn ad-btn-danger ad-btn-sm" onclick="deleteCanned(${i})">×</button>
+            </div>
+            <textarea id="canned-body-${i}" style="width:100%;background:var(--ad-bg);border:1px solid var(--ad-border-2);color:var(--ad-text-2);padding:8px 10px;font-family:var(--sans);font-size:12px;border-radius:3px;min-height:60px;outline:none;line-height:1.5;resize:vertical">${esc(c.body)}</textarea>
+          </div>
+        `).join('')}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button class="ad-btn ad-btn-sm" onclick="addCanned()">+ Add Canned Response</button>
+        <button class="ad-btn ad-btn-primary ad-btn-sm" onclick="saveCanned()">Save All</button>
+      </div>
+    </div>
+    <div style="background:var(--ad-surface);border:1px solid var(--ad-border);border-radius:3px;padding:18px;margin-top:14px;border-left:3px solid var(--green)">
+      <div class="ad-section-hd" style="margin-top:0">Data Export &amp; Import</div>
+      <p style="font-size:12px;color:var(--ad-text-3);line-height:1.5;margin-bottom:14px">CSV export uses Command Center's exact column format — drop it into the IT Command Center Tickets module via ⬆ Import. JSON is a full backup including timeline and attachments.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="ad-btn ad-btn-primary ad-btn-sm" onclick="exportAdmin('csv')">⬇ CSV (for Command Center)</button>
+        <button class="ad-btn ad-btn-sm" onclick="exportAdmin('json')">⬇ JSON (full backup)</button>
+        <button class="ad-btn ad-btn-danger ad-btn-sm" onclick="confirmReset()">⚠ Reset All Data</button>
+      </div>
+    </div>
+  `;
+}
+
+function saveSLA(){
+  ['P1','P2','P3','P4'].forEach(p=>{const v=parseInt(document.getElementById('set-sla-'+p).value);if(v>=1)DB.settings.sla[p]=v;});
+  saveDB();toast('SLA windows saved');
+}
+function savePassword(){
+  const v=document.getElementById('set-pw').value.trim();
+  if(!v)return alert('Enter a new password.');
+  if(v.length<4)return alert('Password should be at least 4 characters.');
+  DB.settings.adminPassword=v;saveDB();renderAdmin();toast('Password updated');
+}
+function addCanned(){DB.settings.cannedResponses.push({label:'New canned response', body:'…'});saveDB();renderAdmin();}
+function deleteCanned(i){if(!confirm('Delete this canned response?'))return;DB.settings.cannedResponses.splice(i,1);saveDB();renderAdmin();}
+function saveCanned(){
+  DB.settings.cannedResponses.forEach((c,i)=>{
+    const lbl=document.getElementById('canned-label-'+i)?.value;
+    const body=document.getElementById('canned-body-'+i)?.value;
+    if(lbl!=null)c.label=lbl;
+    if(body!=null)c.body=body;
+  });
+  saveDB();toast('Canned responses saved');
+}
+function confirmReset(){if(!confirm('This deletes ALL tickets and resets settings. Cannot be undone. Type continue in next prompt to confirm.'))return;const c=prompt('Type "continue" to confirm reset:');if(c!=='continue')return;localStorage.removeItem(STORE_KEY);DB={tickets:[],nextId:1,settings:DB.settings};saveDB();renderAdmin();toast('All data reset');}
+
+// ─── DRAWER (admin ticket detail) ───
+let CURRENT_DRAWER_ID=null;
+let CURRENT_REPLY_TAB='public';
+
+function openDrawer(id){
+  const t=DB.tickets.find(x=>x.id===id);
+  if(!t)return;
+  CURRENT_DRAWER_ID=id;
+  CURRENT_REPLY_TAB='public';
+  document.getElementById('ad-drawer-id').textContent='#'+t.id;
+  document.getElementById('ad-drawer-status').textContent=t.status.toUpperCase();
+  document.getElementById('ad-drawer-bg').classList.add('open');
+  document.getElementById('ad-drawer').classList.add('open');
+  renderDrawerBody();
+}
+function closeDrawer(){
+  CURRENT_DRAWER_ID=null;
+  document.getElementById('ad-drawer-bg').classList.remove('open');
+  document.getElementById('ad-drawer').classList.remove('open');
+}
+function renderDrawerBody(){
+  const t=DB.tickets.find(x=>x.id===CURRENT_DRAWER_ID);
+  if(!t){closeDrawer();return;}
+  const sla=slaInfo(t);
+  const similar=findSimilar(t).slice(0,3);
+  document.getElementById('ad-drawer-body').innerHTML=`
+    <div class="ad-drawer-title">${esc(t.title)}</div>
+
+    <div class="ad-drawer-meta">
+      <div class="ad-meta-row"><div class="ad-meta-lbl">Requester</div><div class="ad-meta-val">${esc(t.requesterName)}<br><span style="font-family:var(--mono);font-size:11px;color:var(--ad-text-3);font-weight:400">${esc(t.requesterEmail)}${t.requesterDept?' · '+esc(t.requesterDept):''}</span></div></div>
+      <div class="ad-meta-row"><div class="ad-meta-lbl">Created</div><div class="ad-meta-val">${fmtDateTime(t.createdAt)}<br><span style="font-family:var(--mono);font-size:11px;color:var(--ad-text-3);font-weight:400">${fmtRelative(t.createdAt)}${t.status!=='resolved'?` · <span class="sla-${sla.state}">${sla.label}</span>`:''}</span></div></div>
+      <div class="ad-meta-row"><div class="ad-meta-lbl">Status</div><div class="ad-meta-val"><select onchange="updateField(${t.id},'status',this.value)"><option value="new" ${t.status==='new'?'selected':''}>NEW</option><option value="progress" ${t.status==='progress'?'selected':''}>IN PROGRESS</option><option value="waiting" ${t.status==='waiting'?'selected':''}>WAITING ON USER</option><option value="resolved" ${t.status==='resolved'?'selected':''}>RESOLVED</option></select></div></div>
+      <div class="ad-meta-row"><div class="ad-meta-lbl">Priority</div><div class="ad-meta-val"><select onchange="updateField(${t.id},'priority',this.value)"><option ${t.priority==='P1'?'selected':''}>P1</option><option ${t.priority==='P2'?'selected':''}>P2</option><option ${t.priority==='P3'?'selected':''}>P3</option><option ${t.priority==='P4'?'selected':''}>P4</option></select></div></div>
+      <div class="ad-meta-row"><div class="ad-meta-lbl">Category</div><div class="ad-meta-val">${esc(t.category)}${t.subCategory?' / '+esc(t.subCategory):''}</div></div>
+      <div class="ad-meta-row"><div class="ad-meta-lbl">Assignee</div><div class="ad-meta-val"><input type="text" value="${esc(t.assignee||'')}" onchange="updateField(${t.id},'assignee',this.value)" placeholder="Unassigned"></div></div>
+    </div>
+
+    <div class="ad-section">
+      <div class="ad-section-hd">Original Description</div>
+      <div class="ad-desc-box">${esc(t.description)}</div>
+      ${t.attachment?`<div style="margin-top:10px;padding:10px 14px;background:var(--ad-surface-2);border:1px solid var(--ad-border);border-radius:3px;border-left:2px solid var(--green);font-size:12px;color:var(--ad-text-2);font-family:var(--mono)">📎 <strong>${esc(t.attachment.name)}</strong> (${Math.round(t.attachment.size/1024)}KB) <a onclick="viewAttachment(${t.id})" style="color:var(--crimson);margin-left:8px;cursor:pointer;text-decoration:underline">VIEW</a></div>`:''}
+    </div>
+
+    ${similar.length?`
+    <div class="ad-section">
+      <div class="ad-section-hd">Similar Past Tickets</div>
+      <div class="ad-similar">
+        ${similar.map(s=>`<div class="ad-similar-item" onclick="openDrawer(${s.id})"><span class="ad-similar-id">#${s.id}</span><strong>${esc(s.title)}</strong> — ${s.status==='resolved'?'<span style="color:var(--green);font-family:var(--mono);font-size:10px;letter-spacing:.5px">RESOLVED</span>':'<span style="color:var(--amber);font-family:var(--mono);font-size:10px">'+s.status.toUpperCase()+'</span>'} <span class="muted" style="font-family:var(--mono);font-size:10px;margin-left:6px">${fmtRelative(s.createdAt)}</span></div>`).join('')}
+      </div>
+    </div>`:''}
+
+    <div class="ad-section">
+      <div class="ad-section-hd">Activity Timeline</div>
+      <div class="ad-timeline">
+        ${t.timeline.map(e=>`
+          <div class="ad-event ${e.kind}">
+            <div class="ad-event-dot">${e.kind==='reply'?(e.fromUser?'U':'IT'):e.kind==='note'?'!':'·'}</div>
+            <div class="ad-event-bd">
+              <div class="ad-event-meta"><span class="ad-event-author">${esc(e.author||'System')}</span> · ${fmtRelative(e.t)} ${e.kind==='reply'?(e.fromUser?'<span class="ad-event-tag public">FROM USER</span>':'<span class="ad-event-tag public">PUBLIC REPLY</span>'):e.kind==='note'?'<span class="ad-event-tag internal">INTERNAL NOTE</span>':''}</div>
+              <div>${esc(e.body)}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="ad-reply">
+      <div class="ad-reply-tabs">
+        <button class="ad-reply-tab ${CURRENT_REPLY_TAB==='public'?'active':''}" onclick="switchReplyTab('public')">↩ Public Reply (emails user)</button>
+        <button class="ad-reply-tab ${CURRENT_REPLY_TAB==='note'?'active':''}" onclick="switchReplyTab('note')">! Internal Note (private)</button>
+      </div>
+      <div class="ad-reply-area">
+        <textarea id="ad-reply-body" placeholder="${CURRENT_REPLY_TAB==='public'?'Reply to the user…':'Internal note for your records…'}"></textarea>
+        ${CURRENT_REPLY_TAB==='public'?`
+          <div class="ad-canned">
+            <span style="margin-right:4px">Quick:</span>
+            ${(DB.settings.cannedResponses||[]).map((c,i)=>`<button class="ad-canned-btn" onclick="useCanned(${i})">${esc(c.label)}</button>`).join('')}
+          </div>`:''}
+        <div class="ad-reply-row">
+          <span class="muted" style="font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase">${CURRENT_REPLY_TAB==='public'?'visible to user':'IT-only'}</span>
+          <button class="ad-btn ad-btn-primary ad-btn-sm" onclick="sendReply()">${CURRENT_REPLY_TAB==='public'?'Send Reply':'Save Note'}</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:18px;display:flex;justify-content:space-between;gap:8px">
+      ${t.status!=='resolved'?`<button class="ad-btn ad-btn-success ad-btn-sm" onclick="markResolved(${t.id})">✓ Mark Resolved</button>`:`<button class="ad-btn ad-btn-sm" onclick="reopenTicket(${t.id})">↺ Reopen</button>`}
+      <button class="ad-btn ad-btn-danger ad-btn-sm" onclick="deleteTicket(${t.id})">🗑 Delete</button>
+    </div>
+  `;
+}
+
+function switchReplyTab(tab){CURRENT_REPLY_TAB=tab;renderDrawerBody();}
+function useCanned(i){
+  const c=DB.settings.cannedResponses[i];
+  if(!c)return;
+  document.getElementById('ad-reply-body').value=c.body;
+}
+function sendReply(){
+  const t=DB.tickets.find(x=>x.id===CURRENT_DRAWER_ID);
+  if(!t)return;
+  const body=document.getElementById('ad-reply-body').value.trim();
+  if(!body)return alert('Type something first.');
+  t.timeline.push({t:nowISO(), kind:CURRENT_REPLY_TAB==='public'?'reply':'note', author:'IT Manager', body, fromUser:false});
+  // If we replied publicly and ticket was 'new', auto-bump to in-progress
+  if(CURRENT_REPLY_TAB==='public'&&t.status==='new')t.status='progress';
+  t.updatedAt=nowISO();
+  saveDB();renderDrawerBody();renderAdmin();toast(CURRENT_REPLY_TAB==='public'?'Reply sent':'Note saved');
+}
+function updateField(id,field,value){
+  const t=DB.tickets.find(x=>x.id===id);
+  if(!t)return;
+  const old=t[field];
+  if(old===value)return;
+  t[field]=value;
+  t.updatedAt=nowISO();
+  t.timeline.push({t:nowISO(), kind:'system', author:'IT Manager', body:`${field} changed: ${old||'—'} → ${value||'—'}`});
+  saveDB();renderAdmin();
+  // Re-render drawer if SLA-affecting field changed
+  if(field==='priority'||field==='status')renderDrawerBody();
+  toast(`${field} updated`);
+}
+function markResolved(id){
+  const t=DB.tickets.find(x=>x.id===id);
+  if(!t)return;
+  if(t.status==='resolved')return;
+  const note=prompt('Resolution note (visible to user):','');
+  if(note==null)return;
+  t.status='resolved';
+  t.updatedAt=nowISO();
+  t.resolution=note;
+  t.timeline.push({t:nowISO(), kind:'system', author:'IT Manager', body:'Ticket resolved'});
+  if(note.trim())t.timeline.push({t:nowISO(), kind:'reply', author:'IT Manager', body:note.trim(), fromUser:false});
+  saveDB();renderDrawerBody();renderAdmin();toast('Ticket resolved');
+}
+function reopenTicket(id){
+  const t=DB.tickets.find(x=>x.id===id);if(!t)return;
+  t.status='progress';t.updatedAt=nowISO();
+  t.timeline.push({t:nowISO(), kind:'system', author:'IT Manager', body:'Ticket reopened'});
+  saveDB();renderDrawerBody();renderAdmin();toast('Ticket reopened');
+}
+function deleteTicket(id){
+  if(!confirm('Permanently delete this ticket and all its history? Cannot be undone.'))return;
+  DB.tickets=DB.tickets.filter(t=>t.id!==id);saveDB();closeDrawer();renderAdmin();toast('Ticket deleted','err');
+}
+function viewAttachment(id){
+  const t=DB.tickets.find(x=>x.id===id);
+  if(!t||!t.attachment)return;
+  const w=window.open('','_blank');
+  if(t.attachment.type.startsWith('image/')){
+    w.document.write(`<title>${esc(t.attachment.name)}</title><body style="margin:0;background:#222;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="${t.attachment.data}" style="max-width:100%;max-height:100vh"></body>`);
+  }else{
+    const a=w.document.createElement('a');a.href=t.attachment.data;a.download=t.attachment.name;a.click();
+  }
+}
+
+function findSimilar(t){
+  const tWords=new Set((t.title+' '+t.description).toLowerCase().match(/\w{4,}/g)||[]);
+  return DB.tickets
+    .filter(x=>x.id!==t.id)
+    .map(x=>{
+      const xWords=new Set((x.title+' '+x.description).toLowerCase().match(/\w{4,}/g)||[]);
+      let common=0;
+      tWords.forEach(w=>{if(xWords.has(w))common++;});
+      return {t:x, score:common};
+    })
+    .filter(s=>s.score>=2)
+    .sort((a,b)=>b.score-a.score)
+    .map(s=>s.t);
+}
+
+function newTicketAdmin(){
+  const title=prompt('Ticket title:');if(!title)return;
+  const requester=prompt('Requester name:');if(!requester)return;
+  const t={id:DB.nextId++,title,description:'(Created by IT)',category:'Other',subCategory:'',priority:'P3',status:'new',requesterName:requester,requesterEmail:'',requesterDept:'',createdAt:nowISO(),updatedAt:nowISO(),timeline:[{t:nowISO(),kind:'system',author:'IT Manager',body:'Ticket created internally by IT'}],assignee:'IT Manager',resolution:''};
+  DB.tickets.unshift(t);saveDB();renderAdmin();openDrawer(t.id);
+}
+
+// ─── EXPORT ───
+function exportAdmin(format){
+  const ts=new Date().toISOString().slice(0,10);
+  if(format==='csv'){
+    // Match Command Center's tickets columns exactly
+    const rows=DB.tickets.map(t=>({
+      '#':t.id,
+      Priority:t.priority,
+      Status:t.status==='new'?'open':t.status==='progress'?'pending':t.status,
+      Category:t.category,
+      Title:t.title,
+      Requester:t.requesterName,
+      Email:t.requesterEmail,
+      Department:t.requesterDept||'',
+      Asset:'',
+      Description:t.description,
+      Resolution:t.resolution||'',
+      Created:t.createdAt.slice(0,10),
+      Updated:t.updatedAt.slice(0,10)
+    }));
+    const headers=Object.keys(rows[0]||{'#':''});
+    const escCSV=v=>{const s=String(v==null?'':v);return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+    const csv=[headers.join(','),...rows.map(r=>headers.map(h=>escCSV(r[h])).join(','))].join('\n');
+    download(`ADVANCED_helpdesk_tickets_${ts}.csv`, new Blob([csv],{type:'text/csv;charset=utf-8'}));
+    toast(`Exported ${rows.length} tickets — drop into Command Center via ⬆ Import`);
+  }else if(format==='json'){
+    download(`ADVANCED_helpdesk_backup_${ts}.json`, new Blob([JSON.stringify(DB,null,2)],{type:'application/json'}));
+    toast('Full backup downloaded');
+  }
+}
+function download(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
+
+function toast(msg, kind){
+  const t=document.getElementById('ad-toast');
+  document.getElementById('ad-toast-msg').textContent=msg;
+  t.classList.toggle('err', kind==='err');
+  t.querySelector('.ad-toast-ic').textContent=kind==='err'?'!':'✓';
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+
+window.addEventListener('DOMContentLoaded',()=>{
+  loadDB();
+  setStep(1);
+  // Hash routing for shareable IT-direct link: #admin
+  if(location.hash==='#admin')openAdminLogin();
+  // Update browser tab title with open count
+  setInterval(()=>{
+    const open=DB.tickets.filter(t=>t.status!=='resolved').length;
+    document.title=open?`(${open}) ADVANCED Helpdesk`:'ADVANCED Helpdesk';
+  }, 5000);
+  // Keyboard shortcut: Esc closes drawer
+  window.addEventListener('keydown', e=>{if(e.key==='Escape'){closeDrawer();closeAdminLogin();}});
+});
+</script>
+</body>
+</html>
