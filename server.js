@@ -162,7 +162,7 @@ app.post('/api/ticket', (req, res) => {
       { t: new Date().toISOString(), kind: 'system', author: 'System', body: 'Ticket created via portal' }
     ],
     attachment: incoming.attachment || null,
-    assignee: incoming.assignee || 'IT Manager',
+    assignee: incoming.assignee || 'Archis',
     resolution: ''
   };
   db.tickets.unshift(t);
