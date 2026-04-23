@@ -97,6 +97,84 @@ function backupDB() {
 app.use(express.json({ limit: '50mb' })); // generous limit for screenshot attachments
 app.use(express.static(path.join(__dirname, 'public')));
 
+// CORS — allow Command Center (different Railway domain) to fetch the sync endpoint
+// We only need it for /api/sync, but it's harmless on read-only GETs everywhere.
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+
+// ─── Pushover notification helper ───
+// Set PUSHOVER_USER_KEY and PUSHOVER_APP_TOKEN as Railway env vars.
+// If either is missing, this silently no-ops so the server keeps working.
+const PUSHOVER_USER = process.env.PUSHOVER_USER_KEY || '';
+const PUSHOVER_TOKEN = process.env.PUSHOVER_APP_TOKEN || '';
+const PUSHOVER_ENABLED = !!(PUSHOVER_USER && PUSHOVER_TOKEN);
+
+// Pushover priority levels: -2 silent, -1 quiet, 0 normal, 1 high (bypass quiet hours), 2 emergency (repeats until acknowledged)
+// Map our P1-P4 to sane Pushover priorities
+const PUSHOVER_PRIORITY_MAP = { P1: 1, P2: 0, P3: 0, P4: -1 };
+
+async function sendPushover({ title, message, priority = 0, url = '', urlTitle = '' }) {
+  if (!PUSHOVER_ENABLED) {
+    console.log('[helpdesk] Pushover disabled (missing env vars), skipping notification');
+    return { ok: false, reason: 'disabled' };
+  }
+  try {
+    const params = new URLSearchParams({
+      token: PUSHOVER_TOKEN,
+      user: PUSHOVER_USER,
+      title: title.substring(0, 250),
+      message: message.substring(0, 1024),
+      priority: String(priority),
+      sound: priority >= 1 ? 'siren' : 'pushover',
+    });
+    if (url) params.append('url', url);
+    if (urlTitle) params.append('url_title', urlTitle.substring(0, 100));
+    // Emergency priority (2) requires retry & expire params
+    if (priority === 2) {
+      params.append('retry', '60');     // retry every 60s
+      params.append('expire', '1800');  // give up after 30 min
+    }
+    const r = await fetch('https://api.pushover.net/1/messages.json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    });
+    const data = await r.json();
+    if (data.status === 1) {
+      console.log(`[helpdesk] Pushover sent: ${title}`);
+      return { ok: true };
+    } else {
+      console.error('[helpdesk] Pushover error:', data);
+      return { ok: false, error: data };
+    }
+  } catch (e) {
+    console.error('[helpdesk] Pushover network error:', e.message);
+    return { ok: false, error: e.message };
+  }
+}
+
+function notifyNewTicket(t, baseUrl) {
+  const pri = (PUSHOVER_PRIORITY_MAP[t.priority] != null) ? PUSHOVER_PRIORITY_MAP[t.priority] : 0;
+  const title = `[${t.priority}] ${t.title}`;
+  const message =
+    `From: ${t.requesterName || 'Unknown'}` +
+    (t.requesterDept ? ` (${t.requesterDept})` : '') +
+    `\nCategory: ${t.category}${t.subCategory ? ' / ' + t.subCategory : ''}` +
+    `\n\n${(t.description || '').substring(0, 500)}` +
+    (t.description && t.description.length > 500 ? '…' : '');
+  const ticketUrl = baseUrl ? `${baseUrl}/#admin` : '';
+  return sendPushover({
+    title, message, priority: pri,
+    url: ticketUrl,
+    urlTitle: ticketUrl ? 'Open Helpdesk Console' : ''
+  });
+}
+
 // ─── Routes ───
 
 // Health check
@@ -167,6 +245,9 @@ app.post('/api/ticket', (req, res) => {
   };
   db.tickets.unshift(t);
   const ok = saveDBFile(db);
+  // Fire push notification in background (don't block response on it)
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  notifyNewTicket(t, baseUrl).catch(e => console.error('[helpdesk] notify failed:', e.message));
   res.json({ ok, ticket: t });
 });
 
@@ -197,8 +278,67 @@ app.post('/api/settings', (req, res) => {
   res.json({ ok, settings: db.settings });
 });
 
+// ─── SYNC ENDPOINT — read-only snapshot for Command Center ──────────────
+// Returns tickets in the exact shape Command Center's tickets module expects.
+// Command Center fetches this on demand (button click) and replaces its DB.tickets.
+// No mutation here — Helpdesk stays the source of truth for ticket data.
+app.get('/api/sync', (req, res) => {
+  const db = loadDB();
+  // Map status: helpdesk uses new/progress/waiting/resolved → Command Center uses open/pending/resolved
+  const statusMap = { new: 'open', progress: 'pending', waiting: 'pending', resolved: 'resolved' };
+  const tickets = db.tickets.map(t => ({
+    id: t.id,
+    title: t.title,
+    description: t.description,
+    category: t.category,
+    priority: t.priority,
+    status: statusMap[t.status] || t.status,
+    requester: t.requesterName,
+    email: t.requesterEmail,
+    department: t.requesterDept,
+    asset: '',
+    resolution: t.resolution || '',
+    created: (t.createdAt || '').slice(0, 10),
+    updated: (t.updatedAt || '').slice(0, 10),
+    // Optional richer fields Command Center may use later
+    _helpdesk: {
+      sourceUrl: `${req.protocol}://${req.get('host')}`,
+      timelineEvents: (t.timeline || []).length,
+      hasAttachment: !!t.attachment,
+      assignee: t.assignee || ''
+    }
+  }));
+  res.json({
+    ok: true,
+    sourceUrl: `${req.protocol}://${req.get('host')}`,
+    syncedAt: new Date().toISOString(),
+    count: tickets.length,
+    tickets
+  });
+});
+
+// ─── TEST PUSHOVER — visit this URL once to verify notifications work ─────
+// Open: https://your-helpdesk.up.railway.app/api/test-pushover
+app.get('/api/test-pushover', async (req, res) => {
+  if (!PUSHOVER_ENABLED) {
+    return res.status(400).json({
+      ok: false,
+      error: 'Pushover not configured',
+      hint: 'Set PUSHOVER_USER_KEY and PUSHOVER_APP_TOKEN env vars in Railway, then redeploy.'
+    });
+  }
+  const result = await sendPushover({
+    title: 'ADVANCED Helpdesk — Test',
+    message: 'If you see this on your phone, push notifications are working. Submit a real ticket from the helpdesk to confirm end-to-end.',
+    priority: 0
+  });
+  res.json(result);
+});
+
 app.listen(PORT, () => {
   console.log(`[helpdesk] Server listening on port ${PORT}`);
   console.log(`[helpdesk] Health: http://localhost:${PORT}/health`);
   console.log(`[helpdesk] DB at:  ${DB_FILE}`);
+  console.log(`[helpdesk] Pushover: ${PUSHOVER_ENABLED ? 'ENABLED ✓' : 'disabled (set PUSHOVER_USER_KEY + PUSHOVER_APP_TOKEN to enable)'}`);
+  console.log(`[helpdesk] Sync endpoint: http://localhost:${PORT}/api/sync`);
 });
