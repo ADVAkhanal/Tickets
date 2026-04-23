@@ -231,6 +231,11 @@ body.admin-mode{background:var(--ad-bg);color:var(--ad-text)}
 .ad-stat-pill .ad-stat-num{color:var(--crimson);font-weight:700;font-size:11px}
 .ad-stat-pill.warn .ad-stat-num{color:var(--amber)}
 .ad-stat-pill.crit .ad-stat-num{color:var(--red)}
+.ad-stat-pill.sync-loading{color:var(--amber);border-color:rgba(180,127,0,.5)}
+.ad-stat-pill.sync-saving{color:var(--amber);border-color:rgba(180,127,0,.5);animation:syncPulse 1s infinite}
+.ad-stat-pill.sync-ok{color:var(--green);border-color:rgba(10,122,63,.45)}
+.ad-stat-pill.sync-err{color:#e85959;border-color:rgba(232,89,89,.5);background:rgba(232,89,89,.08)}
+@keyframes syncPulse{0%,100%{opacity:1}50%{opacity:.55}}
 
 /* Body layout */
 .ad-body{display:grid;grid-template-columns:200px 1fr;height:calc(100vh - 53px)}
@@ -561,6 +566,7 @@ body.admin-mode{background:var(--ad-bg);color:var(--ad-text)}
       <span class="ad-stat-pill" id="ad-pill-open">Open <span class="ad-stat-num" id="ad-pill-open-n">0</span></span>
       <span class="ad-stat-pill warn" id="ad-pill-risk">SLA Risk <span class="ad-stat-num" id="ad-pill-risk-n">0</span></span>
       <span class="ad-stat-pill crit" id="ad-pill-breach">Breach <span class="ad-stat-num" id="ad-pill-breach-n">0</span></span>
+      <span class="ad-stat-pill" id="ad-sync-pill" title="">●</span>
       <button class="ad-btn ad-btn-sm" onclick="exportAdmin('csv')" title="Export for Command Center import">⬇ CSV</button>
       <button class="ad-btn ad-btn-sm" onclick="exportAdmin('json')" title="Full backup JSON">⬇ JSON</button>
       <button class="ad-btn ad-btn-sm" onclick="goEU('home')">⤴ Exit Admin</button>
@@ -612,6 +618,18 @@ body.admin-mode{background:var(--ad-bg);color:var(--ad-text)}
 const STORE_KEY='advHelpdeskV1';
 const ADMIN_PW_KEY='advHelpdeskAdminPw';
 
+// ─── SERVER SYNC STATE ─────────────────────────────────────────
+// The frontend talks to /api/db (read full DB), /api/save (write full DB),
+// and /api/ticket (atomic submit). localStorage is a fallback when offline.
+let _syncState='idle';        // 'idle' | 'saving' | 'synced' | 'offline' | 'loading'
+let _lastSyncedAt=null;
+let _initialFetchDone=false;
+let _pushTimer=null;
+let _lastFetchedAt=0;
+const SERVER_URL='';          // same-origin, so empty string works
+const PUSH_DEBOUNCE_MS=400;   // batch rapid saves into one network call
+const REFRESH_MS=10000;       // poll server every 10s to pick up new tickets
+
 let DB={
   tickets:[],
   nextId:1,
@@ -629,18 +647,135 @@ let DB={
   }
 };
 
-function loadDB(){
+// ─── LOAD: prefer server, fall back to localStorage ──────────────
+async function loadDB(){
+  setSyncState('loading');
+  // Always try localStorage FIRST so the UI can render immediately even on slow networks
   try{
     const raw=localStorage.getItem(STORE_KEY);
     if(raw){
       const parsed=JSON.parse(raw);
-      // Merge to preserve any new defaults added later
       DB={...DB, ...parsed, settings:{...DB.settings, ...(parsed.settings||{})}};
       if(!Array.isArray(DB.tickets))DB.tickets=[];
     }
-  }catch(e){console.error('loadDB:',e)}
+  }catch(e){console.error('localStorage load:',e)}
+
+  // Then try the server. If it returns, it wins (server is the source of truth).
+  try{
+    const ctrl=new AbortController();
+    const timeoutId=setTimeout(()=>ctrl.abort(), 5000);
+    const r=await fetch(SERVER_URL+'/api/db', {signal:ctrl.signal, cache:'no-store'});
+    clearTimeout(timeoutId);
+    if(r.ok){
+      const serverDB=await r.json();
+      if(serverDB && Array.isArray(serverDB.tickets)){
+        DB={...DB, ...serverDB, settings:{...DB.settings, ...(serverDB.settings||{})}};
+        // Mirror to localStorage for offline use
+        try{localStorage.setItem(STORE_KEY, JSON.stringify(DB));}catch(_){}
+        _initialFetchDone=true;
+        _lastFetchedAt=Date.now();
+        setSyncState('synced');
+        return true;
+      }
+    }
+    setSyncState('offline');
+  }catch(e){
+    console.warn('Server unreachable, using localStorage:',e.message);
+    setSyncState('offline');
+  }
+  return false;
 }
-function saveDB(){try{localStorage.setItem(STORE_KEY, JSON.stringify(DB));}catch(e){console.error('saveDB:',e)}}
+
+// ─── SAVE: write to localStorage immediately, push to server (debounced) ──
+function saveDB(){
+  // Always write to localStorage first — fast, can't fail unless quota exceeded
+  try{localStorage.setItem(STORE_KEY, JSON.stringify(DB));}catch(e){console.error('localStorage save:',e)}
+  // Debounce server push so rapid clicks don't spam the server
+  setSyncState('saving');
+  if(_pushTimer)clearTimeout(_pushTimer);
+  _pushTimer=setTimeout(pushToServer, PUSH_DEBOUNCE_MS);
+}
+
+async function pushToServer(){
+  try{
+    const ctrl=new AbortController();
+    const timeoutId=setTimeout(()=>ctrl.abort(), 8000);
+    const r=await fetch(SERVER_URL+'/api/save', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(DB),
+      signal:ctrl.signal
+    });
+    clearTimeout(timeoutId);
+    if(r.ok){
+      _lastSyncedAt=Date.now();
+      setSyncState('synced');
+    }else{
+      setSyncState('offline');
+    }
+  }catch(e){
+    console.warn('Server push failed:',e.message);
+    setSyncState('offline');
+  }
+}
+
+// ─── REFRESH: pull fresh data from server periodically (admin sees new tickets) ──
+async function refreshFromServer(){
+  // Don't refresh if we have unsaved local changes pending
+  if(_syncState==='saving')return;
+  try{
+    const ctrl=new AbortController();
+    const timeoutId=setTimeout(()=>ctrl.abort(), 5000);
+    const r=await fetch(SERVER_URL+'/api/db', {signal:ctrl.signal, cache:'no-store'});
+    clearTimeout(timeoutId);
+    if(!r.ok){setSyncState('offline');return;}
+    const serverDB=await r.json();
+    if(!serverDB||!Array.isArray(serverDB.tickets))return;
+    // Detect if anything changed (cheap shallow check on ticket count + nextId + last update timestamps)
+    const oldCount=DB.tickets.length;
+    const oldNextId=DB.nextId;
+    const oldUpdated=DB.tickets.map(t=>t.updatedAt).join(',');
+    DB={...DB, ...serverDB, settings:{...DB.settings, ...(serverDB.settings||{})}};
+    try{localStorage.setItem(STORE_KEY, JSON.stringify(DB));}catch(_){}
+    _lastFetchedAt=Date.now();
+    setSyncState('synced');
+    const newUpdated=DB.tickets.map(t=>t.updatedAt).join(',');
+    const changed=(DB.tickets.length!==oldCount)||(DB.nextId!==oldNextId)||(oldUpdated!==newUpdated);
+    // Only re-render if something changed AND we're not in the middle of editing something
+    if(changed){
+      // Don't blow away an open drawer if the user is typing a reply
+      const replyEl=document.getElementById('ad-reply-body');
+      const userTyping=replyEl && document.activeElement===replyEl && replyEl.value.trim().length>0;
+      if(!userTyping){
+        if(!document.getElementById('ad-app').classList.contains('hidden')){
+          renderAdmin();
+          if(CURRENT_DRAWER_ID)renderDrawerBody();
+        }
+        if(!document.getElementById('eu-page-mine').classList.contains('hidden'))renderMine();
+      }
+    }
+  }catch(e){
+    setSyncState('offline');
+  }
+}
+
+// ─── SYNC INDICATOR ────────────────────────────────────────────
+function setSyncState(s){
+  _syncState=s;
+  const el=document.getElementById('ad-sync-pill');
+  if(!el)return;
+  const map={
+    idle:{text:'•', cls:'', title:''},
+    loading:{text:'⟳ Loading…', cls:'sync-loading', title:'Fetching latest data'},
+    saving:{text:'⟳ Saving…', cls:'sync-saving', title:'Writing to server'},
+    synced:{text:'● Synced', cls:'sync-ok', title:_lastSyncedAt?'Last synced '+new Date(_lastSyncedAt).toLocaleTimeString():'Up to date'},
+    offline:{text:'⚠ Offline', cls:'sync-err', title:'Server unreachable — changes saved locally and will retry'}
+  };
+  const m=map[s]||map.idle;
+  el.textContent=m.text;
+  el.title=m.title;
+  el.className='ad-stat-pill '+m.cls;
+}
 
 // Helpers
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -955,43 +1090,71 @@ function attachStep5Listeners(){
   if(deptEl)deptEl.onchange=e=>{WIZ.dept=e.target.value;};
 }
 
-function submitTicket(){
+async function submitTicket(){
   if(!WIZ.name.trim())return alert('Please enter your name.');
   if(!WIZ.email.trim()||!/.+@.+\..+/.test(WIZ.email))return alert('Please enter a valid email address.');
   const cat=CATS.find(c=>c.id===WIZ.category);
   const sub=cat?.sub.find(s=>s.id===WIZ.sub);
-  const t={
-    id:DB.nextId++,
+  // Build the ticket payload (no id yet — server assigns)
+  const payload={
     title:WIZ.title.trim(),
     description:WIZ.desc.trim(),
     category:cat?.title||'Other',
     subCategory:sub?.title||'',
     priority:WIZ.urgency||'P3',
-    status:'new',
     requesterName:WIZ.name.trim(),
     requesterEmail:WIZ.email.trim(),
     requesterDept:WIZ.dept||'',
-    createdAt:nowISO(),
-    updatedAt:nowISO(),
     timeline:[
       {t:nowISO(), kind:'system', author:'System', body:`Ticket created via portal. Category: ${cat?.title}${sub?` → ${sub.title}`:''}`}
     ],
     attachment:WIZ.attachment||null,
-    assignee:'IT Manager',
-    resolution:''
+    assignee:'IT Manager'
   };
-  DB.tickets.unshift(t);
-  saveDB();
+  let ticket=null;
+  // Try the atomic server endpoint first
+  try{
+    const ctrl=new AbortController();
+    const timeoutId=setTimeout(()=>ctrl.abort(), 8000);
+    const r=await fetch(SERVER_URL+'/api/ticket', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload),
+      signal:ctrl.signal
+    });
+    clearTimeout(timeoutId);
+    if(r.ok){
+      const data=await r.json();
+      if(data.ok && data.ticket){
+        ticket=data.ticket;
+        // Refresh local DB from server so we have the new ticket and updated nextId
+        await refreshFromServer();
+      }
+    }
+  }catch(e){
+    console.warn('Server submit failed, falling back to local:',e.message);
+  }
+  // Fallback: if server unreachable, save locally with a temporary ID
+  if(!ticket){
+    ticket={
+      id:DB.nextId++,
+      ...payload,
+      status:'new',
+      createdAt:nowISO(),
+      updatedAt:nowISO(),
+      resolution:''
+    };
+    DB.tickets.unshift(ticket);
+    saveDB(); // localStorage write + queued server retry
+  }
   // Remember the user
   localStorage.setItem('advHelpdeskMe', JSON.stringify({name:WIZ.name, email:WIZ.email, dept:WIZ.dept}));
   // Track which tickets belong to me
   const mineList=JSON.parse(localStorage.getItem('advHelpdeskMine')||'[]');
-  mineList.unshift(t.id);
+  mineList.unshift(ticket.id);
   localStorage.setItem('advHelpdeskMine', JSON.stringify(mineList));
 
-  // Show success
-  const slaHrs=DB.settings.sla[t.priority];
-  const ticket=t;
+  const slaHrs=DB.settings.sla[ticket.priority];
   document.getElementById('eu-success').innerHTML=`
     <div class="eu-success">
       <div class="eu-success-mark">✓</div>
@@ -1536,7 +1699,7 @@ function saveCanned(){
   });
   saveDB();toast('Canned responses saved');
 }
-function confirmReset(){if(!confirm('This deletes ALL tickets and resets settings. Cannot be undone. Type continue in next prompt to confirm.'))return;const c=prompt('Type "continue" to confirm reset:');if(c!=='continue')return;localStorage.removeItem(STORE_KEY);DB={tickets:[],nextId:1,settings:DB.settings};saveDB();renderAdmin();toast('All data reset');}
+function confirmReset(){if(!confirm('This deletes ALL tickets and resets settings on the server. Cannot be undone.'))return;const c=prompt('Type "continue" to confirm reset:');if(c!=='continue')return;localStorage.removeItem(STORE_KEY);DB={tickets:[],nextId:1,settings:DB.settings};saveDB();renderAdmin();toast('All data reset (server + local)');}
 
 // ─── DRAWER (admin ticket detail) ───
 let CURRENT_DRAWER_ID=null;
@@ -1762,8 +1925,8 @@ function toast(msg, kind){
 // INIT
 // ═══════════════════════════════════════════════════════════════
 
-window.addEventListener('DOMContentLoaded',()=>{
-  loadDB();
+window.addEventListener('DOMContentLoaded', async ()=>{
+  await loadDB();
   setStep(1);
   // Hash routing for shareable IT-direct link: #admin
   if(location.hash==='#admin')openAdminLogin();
@@ -1772,8 +1935,20 @@ window.addEventListener('DOMContentLoaded',()=>{
     const open=DB.tickets.filter(t=>t.status!=='resolved').length;
     document.title=open?`(${open}) ADVANCED Helpdesk`:'ADVANCED Helpdesk';
   }, 5000);
+  // Pull from server every 10s so admin sees newly-submitted tickets and end users see IT replies
+  setInterval(refreshFromServer, REFRESH_MS);
   // Keyboard shortcut: Esc closes drawer
   window.addEventListener('keydown', e=>{if(e.key==='Escape'){closeDrawer();closeAdminLogin();}});
+  // If a save is pending when the page closes, try to push it
+  window.addEventListener('beforeunload', ()=>{
+    if(_pushTimer){
+      try{
+        clearTimeout(_pushTimer);
+        // Use sendBeacon for reliable delivery during unload
+        navigator.sendBeacon(SERVER_URL+'/api/save', new Blob([JSON.stringify(DB)],{type:'application/json'}));
+      }catch(_){}
+    }
+  });
 });
 </script>
 </body>
