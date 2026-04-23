@@ -534,7 +534,7 @@ body.admin-mode{background:var(--ad-bg);color:var(--ad-text)}
     <div class="ad-login-mark">
       <div class="ad-mark"></div>
       <div>
-        <div class="ad-login-title">IT Manager Console</div>
+        <div class="ad-login-title">IT Support Console</div>
         <div class="ad-login-sub">Restricted Access</div>
       </div>
     </div>
@@ -557,7 +557,7 @@ body.admin-mode{background:var(--ad-bg);color:var(--ad-text)}
       <div class="ad-mark"></div>
       <div class="ad-brand-text">
         <span class="ad-brand-name">Helpdesk Console</span>
-        <span class="ad-brand-tag">IT Manager</span>
+        <span class="ad-brand-tag">IT Support Specialist</span>
       </div>
     </div>
     <div class="ad-divider"></div>
@@ -1074,7 +1074,7 @@ function renderStep5(){
         </div>
       </div>
     </div>
-    <div class="eu-reassure"><span class="eu-reassure-ic">✓</span><div><strong>Your ticket is going to:</strong> Wesley, IT Manager. You'll get an email confirmation right after submitting. Most tickets are acknowledged within the SLA window for the urgency you picked.</div></div>
+    <div class="eu-reassure"><span class="eu-reassure-ic">✓</span><div><strong>Your ticket is going to:</strong> Archis, IT Support Specialist. You'll get an email confirmation right after submitting. Most tickets are acknowledged within the SLA window for the urgency you picked.</div></div>
     <div class="eu-btn-row">
       <button class="eu-btn eu-btn-link" onclick="setStep(4)">← Back</button>
       <button class="eu-btn eu-btn-primary" onclick="submitTicket()">Submit Ticket →</button>
@@ -1109,7 +1109,7 @@ async function submitTicket(){
       {t:nowISO(), kind:'system', author:'System', body:`Ticket created via portal. Category: ${cat?.title}${sub?` → ${sub.title}`:''}`}
     ],
     attachment:WIZ.attachment||null,
-    assignee:'IT Manager'
+    assignee:'Archis'
   };
   let ticket=null;
   // Try the atomic server endpoint first
@@ -1461,7 +1461,7 @@ function attachKanbanDnD(){
       const oldStatus=t.status;
       t.status=newStatus;
       t.updatedAt=nowISO();
-      t.timeline.push({t:nowISO(), kind:'system', author:'IT Manager', body:`Status changed: ${oldStatus} → ${newStatus}`});
+      t.timeline.push({t:nowISO(), kind:'system', author:'Archis', body:`Status changed: ${oldStatus} → ${newStatus}`});
       saveDB();
       renderAdmin();
       toast(`Moved #${id} to ${newStatus}`);
@@ -1804,7 +1804,7 @@ function sendReply(){
   if(!t)return;
   const body=document.getElementById('ad-reply-body').value.trim();
   if(!body)return alert('Type something first.');
-  t.timeline.push({t:nowISO(), kind:CURRENT_REPLY_TAB==='public'?'reply':'note', author:'IT Manager', body, fromUser:false});
+  t.timeline.push({t:nowISO(), kind:CURRENT_REPLY_TAB==='public'?'reply':'note', author:'Archis', body, fromUser:false});
   // If we replied publicly and ticket was 'new', auto-bump to in-progress
   if(CURRENT_REPLY_TAB==='public'&&t.status==='new')t.status='progress';
   t.updatedAt=nowISO();
@@ -1817,7 +1817,7 @@ function updateField(id,field,value){
   if(old===value)return;
   t[field]=value;
   t.updatedAt=nowISO();
-  t.timeline.push({t:nowISO(), kind:'system', author:'IT Manager', body:`${field} changed: ${old||'—'} → ${value||'—'}`});
+  t.timeline.push({t:nowISO(), kind:'system', author:'Archis', body:`${field} changed: ${old||'—'} → ${value||'—'}`});
   saveDB();renderAdmin();
   // Re-render drawer if SLA-affecting field changed
   if(field==='priority'||field==='status')renderDrawerBody();
@@ -1832,14 +1832,14 @@ function markResolved(id){
   t.status='resolved';
   t.updatedAt=nowISO();
   t.resolution=note;
-  t.timeline.push({t:nowISO(), kind:'system', author:'IT Manager', body:'Ticket resolved'});
-  if(note.trim())t.timeline.push({t:nowISO(), kind:'reply', author:'IT Manager', body:note.trim(), fromUser:false});
+  t.timeline.push({t:nowISO(), kind:'system', author:'Archis', body:'Ticket resolved'});
+  if(note.trim())t.timeline.push({t:nowISO(), kind:'reply', author:'Archis', body:note.trim(), fromUser:false});
   saveDB();renderDrawerBody();renderAdmin();toast('Ticket resolved');
 }
 function reopenTicket(id){
   const t=DB.tickets.find(x=>x.id===id);if(!t)return;
   t.status='progress';t.updatedAt=nowISO();
-  t.timeline.push({t:nowISO(), kind:'system', author:'IT Manager', body:'Ticket reopened'});
+  t.timeline.push({t:nowISO(), kind:'system', author:'Archis', body:'Ticket reopened'});
   saveDB();renderDrawerBody();renderAdmin();toast('Ticket reopened');
 }
 function deleteTicket(id){
@@ -1875,7 +1875,7 @@ function findSimilar(t){
 function newTicketAdmin(){
   const title=prompt('Ticket title:');if(!title)return;
   const requester=prompt('Requester name:');if(!requester)return;
-  const t={id:DB.nextId++,title,description:'(Created by IT)',category:'Other',subCategory:'',priority:'P3',status:'new',requesterName:requester,requesterEmail:'',requesterDept:'',createdAt:nowISO(),updatedAt:nowISO(),timeline:[{t:nowISO(),kind:'system',author:'IT Manager',body:'Ticket created internally by IT'}],assignee:'IT Manager',resolution:''};
+  const t={id:DB.nextId++,title,description:'(Created by IT)',category:'Other',subCategory:'',priority:'P3',status:'new',requesterName:requester,requesterEmail:'',requesterDept:'',createdAt:nowISO(),updatedAt:nowISO(),timeline:[{t:nowISO(),kind:'system',author:'Archis',body:'Ticket created internally by IT'}],assignee:'Archis',resolution:''};
   DB.tickets.unshift(t);saveDB();renderAdmin();openDrawer(t.id);
 }
 
