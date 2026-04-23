@@ -196,7 +196,13 @@ app.post('/api/settings', (req, res) => {
   const ok = saveDBFile(db);
   res.json({ ok, settings: db.settings });
 });
-
+// TEMPORARY PASSWORD RESET — REMOVE AFTER USE
+app.get('/reset-pw-emergency-x9k2m', (req, res) => {
+  const db = loadDB();
+  db.settings.adminPassword = 'changeme123';
+  saveDBFile(db);
+  res.send('Password reset to: changeme123 — log in now and change it in Settings, then delete this endpoint from server.js');
+});
 app.listen(PORT, () => {
   console.log(`[helpdesk] Server listening on port ${PORT}`);
   console.log(`[helpdesk] Health: http://localhost:${PORT}/health`);
